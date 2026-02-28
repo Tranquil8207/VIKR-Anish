@@ -2,7 +2,7 @@
 import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { Users, FileText, Package, LayoutDashboard, Settings } from "lucide-react"
+import { Users, FileText, Package, LayoutDashboard } from "lucide-react"
 
 export default async function DashboardLayout({
   children,
@@ -43,9 +43,16 @@ export default async function DashboardLayout({
         <nav className="flex-1 px-4 space-y-1">
           <NavItem href="/dashboard" icon={<LayoutDashboard className="w-4 h-4" />} label="Overview" active />
           <NavItem href="/dashboard/products" icon={<Package className="w-4 h-4" />} label="Products" />
+          <NavItem href="/dashboard/training" icon={<FileText className="w-4 h-4" />} label="Training" />
+          <NavItem href="/dashboard/meetings" icon={<Users className="w-4 h-4" />} label="Meetings" />
+          <NavItem href="/dashboard/support" icon={<FileText className="w-4 h-4" />} label="Support" />
           <NavItem href="/dashboard/documents" icon={<FileText className="w-4 h-4" />} label="Documents" />
           {profile?.role === 'admin' && (
-             <NavItem href="/dashboard/users" icon={<Users className="w-4 h-4" />} label="Users" />
+             <>
+               <NavItem href="/dashboard/admin/users" icon={<Users className="w-4 h-4" />} label="Admin Users" />
+               <NavItem href="/dashboard/admin/cms" icon={<Package className="w-4 h-4" />} label="Admin CMS" />
+               <NavItem href="/dashboard/admin/meetings" icon={<Users className="w-4 h-4" />} label="Admin Meetings" />
+             </>
           )}
         </nav>
 

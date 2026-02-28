@@ -6,7 +6,14 @@ import { Label } from "@/components/ui/label"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Beaker } from "lucide-react"
 
-export default function LoginPage() {
+type Props = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function LoginPage(props: Props) {
+  const searchParams = await props.searchParams
+  const error = searchParams?.error as string | undefined
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
       <Card className="w-[350px] border-zinc-200 shadow-none dark:border-zinc-800">
@@ -23,6 +30,11 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form className="space-y-4">
+            {error && (
+              <div className="p-3 text-sm text-red-500 bg-red-100 rounded-md text-center font-medium">
+                {error}
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" name="email" type="email" placeholder="name@vikr.com" required />
@@ -41,3 +53,4 @@ export default function LoginPage() {
     </div>
   )
 }
+
