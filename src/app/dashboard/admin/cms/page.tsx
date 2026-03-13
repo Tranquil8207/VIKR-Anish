@@ -16,7 +16,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 
-const REGIONS = ["GLOBAL", "MENA", "APAC", "EU", "NA", "LATAM", "AFRICA"]
+const REGIONS = ["GLOBAL", "UAE", "KSA", "North America", "Russia", "India"]
 const CATEGORIES = ["Hardware", "Software", "Services", "Accessories", "Cleaning", "Polishing", "Maintenance", "Restoration"]
 
 export default function AdminCMSPage() {

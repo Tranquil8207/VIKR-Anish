@@ -1,21 +1,41 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import { Database } from '@/types/supabase'
+
+function createAdminClient() {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY is missing from environment variables.')
+  }
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  )
+}
 
 type Territory = Database['public']['Enums']['territory']
 
 /**
  * Checks if the current user is an admin.
- * Used internally by admin actions to prevent unauthorized access.
+ * Uses the service role client to bypass the recursive RLS policy on profiles,
+ * which would otherwise cause Supabase to return null and fail the check.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function requireAdmin(supabase: any) {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) throw new Error('Not authenticated')
 
-  const { data: profile } = await supabase
+  // Use admin client to bypass the recursive "Admins can view all profiles" RLS policy
+  const supabaseAdmin = createAdminClient()
+  const { data: profile } = await supabaseAdmin
     .from('profiles')
     .select('is_admin')
     .eq('id', user.id)
@@ -38,7 +58,10 @@ export async function getPartners() {
   try {
     await requireAdmin(supabase)
 
-    const { data, error } = await supabase
+    // Use admin client to fetch all profiles — the anon client's SELECT policy
+    // on profiles is recursive and returns null for cross-user queries
+    const supabaseAdmin = createAdminClient()
+    const { data, error } = await supabaseAdmin
       .from('profiles')
       .select('*')
       .order('created_at', { ascending: false })
@@ -68,6 +91,89 @@ export async function updatePartnerTerritory(partnerId: string, newTerritory: Te
     return { success: true }
   } catch (error: unknown) {
     console.error('Error updating partner territory:', error)
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
+  }
+}
+
+export async function createPartner(formData: FormData) {
+  const supabase = await createClient()
+
+  try {
+    await requireAdmin(supabase)
+
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+    const territoryCode = formData.get('territory_code') as Territory
+    const fullName = formData.get('full_name') as string
+
+    if (!email || !password || !territoryCode) {
+      throw new Error('Email, password, and territory are required')
+    }
+
+    const supabaseAdmin = createAdminClient()
+
+    // Pass territory_code and full_name in user_metadata so the
+    // on_auth_user_created trigger can cast it correctly to the territory enum
+    const { data, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        full_name: fullName || null,
+        territory_code: territoryCode,
+      }
+    })
+
+    if (authError) throw authError
+
+    // Do a follow-up upsert to guarantee the territory and name are set correctly,
+    // in case the trigger ran before the metadata was fully resolved
+    if (data?.user) {
+      const { error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .upsert({
+          id: data.user.id,
+          email,
+          territory_code: territoryCode,
+          is_admin: false, // Always partner — admin status must be granted separately
+          ...(fullName ? { full_name: fullName } : {}),
+        }, { onConflict: 'id' })
+
+      if (profileError) {
+        // Log but don't throw — user was created successfully, profile update is best-effort
+        console.error('Profile update after user creation failed:', profileError)
+      }
+    }
+
+    revalidatePath('/dashboard/admin/users')
+    return { success: true }
+  } catch (error: unknown) {
+    console.error('Error creating partner:', error)
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
+  }
+}
+
+export async function resetPartnerPassword(partnerId: string, newPassword: string) {
+  const supabase = await createClient()
+
+  try {
+    await requireAdmin(supabase)
+
+    if (!newPassword || newPassword.length < 6) {
+      throw new Error('Password must be at least 6 characters')
+    }
+
+    const supabaseAdmin = createAdminClient()
+
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(partnerId, {
+      password: newPassword,
+    })
+
+    if (error) throw error
+
+    return { success: true }
+  } catch (error: unknown) {
+    console.error('Error resetting partner password:', error)
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
   }
 }
