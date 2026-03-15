@@ -1,4 +1,4 @@
-"use client"
+"use client" // Trigger reload
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -78,30 +78,30 @@ export default function SupportTicketingPage() {
    }
 
    return (
-      <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-12 w-full bg-[#0d1208] min-h-full">
+      <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-12 w-full bg-bg-main min-h-full">
          <div>
-            <h2 className="text-3xl font-bold tracking-tight text-white">Partner Support</h2>
-            <p className="text-[#8aab7a] mt-1">Submit a new request or check the status of your existing tickets.</p>
+            <h2 className="text-3xl font-bold tracking-tight text-text-main">Partner Support</h2>
+            <p className="text-text-muted mt-1">Submit a new request or check the status of your existing tickets.</p>
          </div>
 
          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
 
             {/* Create Ticket Form */}
             <div className="md:col-span-1 space-y-6 shrink-0">
-               <div className="rounded-xl border border-[#243018] bg-[#121a0e] overflow-hidden">
-                  <div className="p-5 border-b border-[#243018]">
-                     <h3 className="text-base font-bold text-white flex items-center gap-2">
-                        <MessageSquarePlus className="w-5 h-5 text-[#6abf30]" />
+               <div className="rounded-xl border border-border-subtle bg-bg-card overflow-hidden">
+                  <div className="p-5 border-b border-border-subtle">
+                     <h3 className="text-base font-bold text-text-main flex items-center gap-2">
+                        <MessageSquarePlus className="w-5 h-5 text-brand-accent" />
                         New Ticket
                      </h3>
-                     <p className="text-sm text-[#8aab7a] mt-1">We typically respond within 24 hours.</p>
+                     <p className="text-sm text-text-muted mt-1">We typically respond within 24 hours.</p>
                   </div>
                   <div className="p-5">
                      <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-2">
-                           <label className="text-sm font-medium text-[#e8f0e2]" htmlFor="category">Category</label>
+                           <label className="text-sm font-medium text-text-main" htmlFor="category">Category</label>
                            <Select required name="category" defaultValue="Technical">
-                              <SelectTrigger id="category" className="w-full bg-[#0d1208] border-[#243018] text-[#e8f0e2]">
+                              <SelectTrigger id="category" className="w-full bg-bg-main border-border-subtle text-text-main">
                                  <SelectValue placeholder="Select a category" />
                               </SelectTrigger>
                               <SelectContent>
@@ -113,17 +113,17 @@ export default function SupportTicketingPage() {
                         </div>
 
                         <div className="space-y-2">
-                           <label className="text-sm font-medium text-[#e8f0e2]" htmlFor="description">Description</label>
+                           <label className="text-sm font-medium text-text-main" htmlFor="description">Description</label>
                            <Textarea
                               id="description"
                               name="description"
                               required
                               placeholder="Please describe your issue or request in detail..."
-                              className="min-h-[120px] resize-y w-full bg-[#0d1208] border-[#243018] text-[#e8f0e2] placeholder:text-[#4a6040]"
+                              className="min-h-[120px] resize-y w-full bg-bg-main border-border-subtle text-text-main placeholder:text-text-meta"
                            />
                         </div>
 
-                        <Button type="submit" className="w-full bg-[#6abf30] hover:bg-[#4e9422] text-black font-bold" disabled={isSubmitting}>
+                        <Button type="submit" className="w-full bg-brand-accent hover:bg-[#4e9422] text-black font-bold" disabled={isSubmitting}>
                            {isSubmitting ? "Submitting..." : "Submit Ticket"}
                         </Button>
                      </form>
@@ -133,10 +133,10 @@ export default function SupportTicketingPage() {
 
             {/* My Tickets View */}
             <div className="md:col-span-2 space-y-6 min-w-0">
-               <h3 className="text-xl font-semibold text-white">My Tickets</h3>
+               <h3 className="text-xl font-semibold text-text-main">My Tickets</h3>
                <div className="grid gap-4">
                   {isLoading ? (
-                     <div className="text-center py-12 text-[#4a6040] border rounded-lg border-dashed border-[#243018]">
+                     <div className="text-center py-12 text-text-meta border rounded-lg border-dashed border-border-subtle">
                         Loading your tickets...
                      </div>
                   ) : error ? (
@@ -144,32 +144,32 @@ export default function SupportTicketingPage() {
                         {error}
                      </div>
                   ) : tickets.length === 0 ? (
-                     <div className="text-center py-12 text-[#4a6040] border rounded-lg border-dashed border-[#243018]">
+                     <div className="text-center py-12 text-text-meta border rounded-lg border-dashed border-border-subtle">
                         You haven&apos;t submitted any tickets yet.
                      </div>
                   ) : (
                      tickets.map(ticket => (
-                        <div key={ticket.id} className="rounded-xl border border-[#243018] bg-[#121a0e] hover:bg-[#1a2413] transition-all overflow-hidden">
+                        <div key={ticket.id} className="rounded-xl border border-border-subtle bg-bg-card hover:bg-bg-hover transition-all overflow-hidden">
                            <div className="p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
                               <div className="space-y-1.5 w-full sm:w-2/3">
                                  <div className="flex items-center gap-3 mb-1">
-                                    <span className="text-xs font-mono text-[#4a6040] bg-[#0d1208] px-2 py-0.5 rounded border border-[#243018]">
+                                    <span className="text-xs font-mono text-text-meta bg-bg-main px-2 py-0.5 rounded border border-border-subtle">
                                        {ticket.ticket_id || ticket.id.substring(0, 8)}
                                     </span>
-                                    <span className="text-sm font-semibold text-[#e8f0e2]">
+                                    <span className="text-sm font-semibold text-text-main">
                                        {ticket.category}
                                     </span>
                                  </div>
-                                 <p className="text-sm text-[#8aab7a] line-clamp-2 sm:line-clamp-3 overflow-wrap break-words word-break">
+                                 <p className="text-sm text-text-muted line-clamp-2 sm:line-clamp-3 overflow-wrap break-words word-break">
                                     {ticket.description}
                                  </p>
                               </div>
 
-                              <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 sm:gap-1.5 pl-0 sm:pl-4 sm:border-l border-[#243018] mt-2 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 shrink-0">
+                              <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 sm:gap-1.5 pl-0 sm:pl-4 sm:border-l border-border-subtle mt-2 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 shrink-0">
                                  <Badge variant={getBadgeVariant(ticket.status)}>
                                     {ticket.status.replace("_", " ")}
                                  </Badge>
-                                 <span className="text-xs text-[#4a6040] whitespace-nowrap">
+                                 <span className="text-xs text-text-meta whitespace-nowrap">
                                     {new Date(ticket.created_at).toLocaleDateString()}
                                  </span>
                               </div>

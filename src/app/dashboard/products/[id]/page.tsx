@@ -227,7 +227,7 @@ export default function ProductDetailPage() {
                            aria-label={media.description || "Product Media"}
                          />
                          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                            <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-sm shadow-none">
+                            <Badge className="bg-white/20 hover:bg-white/30 text-text-main border-0 backdrop-blur-sm shadow-none">
                               {media.type}
                             </Badge>
                          </div>
@@ -264,7 +264,7 @@ export default function ProductDetailPage() {
                    href={activePdfUrl} 
                    target="_blank" 
                    rel="noopener noreferrer" 
-                   className="text-white hover:text-primary-400 transition-colors flex items-center gap-1.5 shrink-0 bg-white/10 px-2 py-1 rounded hover:bg-white/20"
+                   className="text-text-main hover:text-primary-400 transition-colors flex items-center gap-1.5 shrink-0 bg-white/10 px-2 py-1 rounded hover:bg-white/20"
                  >
                    <ExternalLink className="w-3.5 h-3.5" /> Open
                  </a>

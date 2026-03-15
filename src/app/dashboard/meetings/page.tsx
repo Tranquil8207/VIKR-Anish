@@ -1,4 +1,4 @@
-"use client"
+"use client" // Trigger reload
 
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
@@ -168,17 +168,17 @@ export default function MeetingsPage() {
   }
 
   return (
-    <div className="relative p-4 md:p-8 max-w-6xl mx-auto space-y-8 bg-[#0d1208] min-h-full">
+    <div className="relative p-4 md:p-8 max-w-7xl mx-auto space-y-8 bg-bg-main min-h-full">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-white">Meetings Log</h2>
-          <p className="text-[#8aab7a] mt-1">View your past recordings and upcoming support calls.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-text-main">Meetings Log</h2>
+          <p className="text-text-muted mt-1">View your past recordings and upcoming support calls.</p>
         </div>
         <Button
           onClick={openPanel}
-          className="gap-2 shrink-0 bg-[#6abf30] hover:bg-[#4e9422] text-black font-bold"
+          className="gap-2 shrink-0 bg-brand-accent hover:bg-[#4e9422] text-black font-bold"
         >
           <Calendar className="w-4 h-4" />
           Schedule a Call
@@ -188,8 +188,8 @@ export default function MeetingsPage() {
       {/* Meetings Calendar */}
       <div className="space-y-3">
         <div>
-          <h3 className="text-sm font-semibold uppercase tracking-widest text-[#4a6040]">Calendar</h3>
-          <p className="text-xs text-[#4a6040] mt-0.5">Click a highlighted day to see meeting details.</p>
+          <h3 className="text-sm font-semibold uppercase tracking-widest text-text-meta">Calendar</h3>
+          <p className="text-xs text-text-meta mt-0.5">Click a highlighted day to see meeting details.</p>
         </div>
         <MeetingsCalendar meetings={meetings} />
       </div>
@@ -197,23 +197,23 @@ export default function MeetingsPage() {
       {/* Meetings table */}
       <div>
         <div className="mb-3">
-          <h3 className="text-sm font-semibold uppercase tracking-widest text-[#4a6040]">All Meetings</h3>
+          <h3 className="text-sm font-semibold uppercase tracking-widest text-text-meta">All Meetings</h3>
         </div>
-        <div className="rounded-xl border border-[#243018] overflow-hidden bg-[#121a0e]">
+        <div className="rounded-xl border border-border-subtle overflow-hidden bg-bg-card">
           <Table>
-            <TableHeader className="bg-[#1a2413] border-b border-[#243018]">
+            <TableHeader className="bg-bg-hover border-b border-border-subtle">
               <TableRow>
-                <TableHead className="w-[180px] text-[#8aab7a]">Date / Time</TableHead>
-                <TableHead className="text-[#8aab7a]">Topic &amp; Notes</TableHead>
-                <TableHead className="text-right w-[200px] text-[#8aab7a]">Links</TableHead>
+                <TableHead className="w-[180px] text-text-muted">Date / Time</TableHead>
+                <TableHead className="text-text-muted">Topic &amp; Notes</TableHead>
+                <TableHead className="text-right w-[200px] text-text-muted">Links</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={3} className="h-24 text-center">
-                    <div className="flex justify-center items-center gap-2 text-[#8aab7a]">
-                      <div className="w-4 h-4 border-2 border-[#6abf30] border-t-transparent rounded-full animate-spin" />
+                    <div className="flex justify-center items-center gap-2 text-text-muted">
+                      <div className="w-4 h-4 border-2 border-brand-accent border-t-transparent rounded-full animate-spin" />
                       Loading meetings...
                     </div>
                   </TableCell>
@@ -226,7 +226,7 @@ export default function MeetingsPage() {
                 </TableRow>
               ) : meetings.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center text-[#4a6040] italic">
+                  <TableCell colSpan={3} className="h-24 text-center text-text-meta italic">
                     No meetings found in your log.
                   </TableCell>
                 </TableRow>
@@ -235,38 +235,38 @@ export default function MeetingsPage() {
                   const { date, time } = formatDateTime(meeting.date_time)
                   const isPast = new Date(meeting.date_time) < new Date()
                   return (
-                    <TableRow key={meeting.id} className="border-b border-[#243018] hover:bg-[#1a2413]">
+                    <TableRow key={meeting.id} className="border-b border-border-subtle hover:bg-bg-hover">
                       <TableCell className="align-top py-4">
-                        <div className="font-medium text-[#e8f0e2]">{date}</div>
-                        <div className="text-sm text-[#8aab7a]">{time}</div>
+                        <div className="font-medium text-text-main">{date}</div>
+                        <div className="text-sm text-text-muted">{time}</div>
                         {isPast ? (
-                          <Badge variant="outline" className="mt-2 text-[10px] bg-[#243018] border-[#243018] px-1.5 py-0 italic text-[#4a6040]">PAST</Badge>
+                          <Badge variant="outline" className="mt-2 text-[10px] bg-[#243018] border-border-subtle px-1.5 py-0 italic text-text-meta">PAST</Badge>
                         ) : (
-                          <Badge className="mt-2 bg-[#6abf30]/20 text-[#6abf30] hover:bg-[#6abf30]/20 px-1.5 py-0 text-[10px]">UPCOMING</Badge>
+                          <Badge className="mt-2 bg-brand-accent/20 text-brand-accent hover:bg-brand-accent/20 px-1.5 py-0 text-[10px]">UPCOMING</Badge>
                         )}
                       </TableCell>
                       <TableCell className="align-top py-4">
-                        <div className="font-medium text-[#e8f0e2] mb-1">{meeting.title}</div>
+                        <div className="font-medium text-text-main mb-1">{meeting.title}</div>
                         {meeting.notes ? (
-                          <p className="text-sm text-[#8aab7a] max-w-md line-clamp-2">{meeting.notes}</p>
+                          <p className="text-sm text-text-muted max-w-md line-clamp-2">{meeting.notes}</p>
                         ) : (
-                          <span className="text-xs text-[#4a6040] italic">No notes provided</span>
+                          <span className="text-xs text-text-meta italic">No notes provided</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right align-top py-4">
                         <div className="flex flex-col items-end gap-2">
                           {meeting.meet_link && !isPast && (
-                            <Button variant="outline" size="sm" className="h-8 gap-1.5 w-full sm:w-auto border-[#243018] text-[#e8f0e2] hover:bg-[#1a2413]" onClick={() => window.open(meeting.meet_link!, "_blank")}>
+                            <Button variant="outline" size="sm" className="h-8 gap-1.5 w-full sm:w-auto border-border-subtle text-text-main hover:bg-bg-hover" onClick={() => window.open(meeting.meet_link!, "_blank")}>
                               <ExternalLink className="w-3.5 h-3.5" /> Join Chat
                             </Button>
                           )}
                           {meeting.recording_url && (
-                            <Button variant="secondary" size="sm" className="h-8 gap-1.5 w-full sm:w-auto bg-[#1a2413] text-[#6abf30] hover:bg-[#243018]" onClick={() => window.open(meeting.recording_url!, "_blank")}>
+                            <Button variant="secondary" size="sm" className="h-8 gap-1.5 w-full sm:w-auto bg-bg-hover text-brand-accent hover:bg-[#243018]" onClick={() => window.open(meeting.recording_url!, "_blank")}>
                               <Video className="w-3.5 h-3.5" /> Watch Recording
                             </Button>
                           )}
                           {!meeting.meet_link && !meeting.recording_url && (
-                            <span className="text-xs text-[#4a6040] italic flex items-center gap-1"><FileText className="w-3 h-3" />Log Only</span>
+                            <span className="text-xs text-text-meta italic flex items-center gap-1"><FileText className="w-3 h-3" />Log Only</span>
                           )}
                         </div>
                       </TableCell>
@@ -289,22 +289,22 @@ export default function MeetingsPage() {
           />
 
           {/* Panel */}
-          <div className="fixed top-0 right-0 h-full z-50 w-full max-w-[480px] bg-[#0f1f0b] border-l border-[#243018] shadow-2xl flex flex-col overflow-y-auto">
+          <div className="fixed top-0 right-0 h-full z-50 w-full max-w-[480px] bg-bg-card border-l border-border-subtle shadow-2xl flex flex-col overflow-y-auto">
 
             {/* Panel header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-[#243018] shrink-0">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-border-subtle shrink-0">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-[#6abf30]/10">
-                  <Calendar className="w-5 h-5 text-[#6abf30]" />
+                <div className="p-2 rounded-lg bg-brand-accent/10">
+                  <Calendar className="w-5 h-5 text-brand-accent" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">Schedule a Call</h3>
-                  <p className="text-xs text-[#8aab7a]">Invite team members to a meeting</p>
+                  <h3 className="text-lg font-bold text-text-main">Schedule a Call</h3>
+                  <p className="text-xs text-text-muted">Invite team members to a meeting</p>
                 </div>
               </div>
               <button
                 onClick={closePanel}
-                className="p-1.5 rounded-lg text-[#4a6040] hover:text-[#e8f0e2] hover:bg-[#243018] transition-colors"
+                className="p-1.5 rounded-lg text-text-meta hover:text-text-main hover:bg-[#243018] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -314,7 +314,7 @@ export default function MeetingsPage() {
             <form onSubmit={handleSubmit} className="flex flex-col flex-1 p-6 space-y-5">
 
               {successMsg && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-[#6abf30]/10 border border-[#6abf30]/30 text-[#6abf30] text-sm font-semibold">
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-brand-accent/10 border border-brand-accent/30 text-brand-accent text-sm font-semibold">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
                   {successMsg}
                 </div>
@@ -327,14 +327,14 @@ export default function MeetingsPage() {
               )}
 
               <div className="space-y-2">
-                <Label className="text-[#e8f0e2] text-xs font-semibold uppercase tracking-wider">
-                  Participants <span className="text-[#8aab7a] font-normal normal-case ml-1">(Who would you like to invite to this meeting?)</span> <span className="text-red-400">*</span>
+                <Label className="text-text-main text-xs font-semibold uppercase tracking-wider">
+                  Participants <span className="text-text-muted font-normal normal-case ml-1">(Who would you like to invite to this meeting?)</span> <span className="text-red-400">*</span>
                 </Label>
-                <div className="max-h-48 overflow-y-auto space-y-2 p-3 rounded-md border border-[#243018] bg-[#121a0e]">
+                <div className="max-h-48 overflow-y-auto space-y-2 p-3 rounded-md border border-border-subtle bg-bg-card">
                   {isLoadingPartners ? (
-                    <p className="text-xs text-[#8aab7a]">Loading users...</p>
+                    <p className="text-xs text-text-muted">Loading users...</p>
                   ) : partners.filter(p => p.id !== currentUserId).length === 0 ? (
-                    <p className="text-xs text-[#8aab7a]">No other users found to invite.</p>
+                    <p className="text-xs text-text-muted">No other users found to invite.</p>
                   ) : (
                     partners
                       .filter(p => p.id !== currentUserId)
@@ -350,14 +350,14 @@ export default function MeetingsPage() {
                                 setParticipantIds(participantIds.filter((id) => id !== p.id))
                               }
                             }}
-                            className="border-[#4a6040] data-[state=checked]:bg-[#6abf30] data-[state=checked]:text-black"
+                            className="border-[#4a6040] data-[state=checked]:bg-brand-accent data-[state=checked]:text-black"
                           />
                           <Label
                             htmlFor={`user-${p.id}`}
-                            className="text-sm font-medium leading-none text-[#e8f0e2] cursor-pointer"
+                            className="text-sm font-medium leading-none text-text-main cursor-pointer"
                           >
                             {p.full_name || p.email}
-                            <span className="ml-2 text-xs font-mono text-[#8aab7a] uppercase tracking-wider">
+                            <span className="ml-2 text-xs font-mono text-text-muted uppercase tracking-wider">
                               ({p.territory_code}{p.is_admin ? " / Admin" : ""})
                             </span>
                           </Label>
@@ -368,7 +368,7 @@ export default function MeetingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="s-title" className="text-[#e8f0e2] text-xs font-semibold uppercase tracking-wider">
+                <Label htmlFor="s-title" className="text-text-main text-xs font-semibold uppercase tracking-wider">
                   Meeting Title <span className="text-red-400">*</span>
                 </Label>
                 <Input
@@ -377,12 +377,12 @@ export default function MeetingsPage() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
-                  className="bg-[#0d1208] border-[#243018] text-[#e8f0e2] placeholder:text-[#4a6040]"
+                  className="bg-bg-main border-border-subtle text-text-main placeholder:text-text-meta"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="s-dateTime" className="text-[#e8f0e2] text-xs font-semibold uppercase tracking-wider">
+                <Label htmlFor="s-dateTime" className="text-text-main text-xs font-semibold uppercase tracking-wider">
                   Date &amp; Time <span className="text-red-400">*</span>
                 </Label>
                 <Input
@@ -391,13 +391,13 @@ export default function MeetingsPage() {
                   value={dateTime}
                   onChange={(e) => setDateTime(e.target.value)}
                   required
-                  className="bg-[#0d1208] border-[#243018] text-[#e8f0e2]"
+                  className="bg-bg-main border-border-subtle text-text-main"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="s-meetLink" className="text-[#e8f0e2] text-xs font-semibold uppercase tracking-wider">
-                  Video Call Link <span className="text-[#4a6040] font-normal normal-case">(optional)</span>
+                <Label htmlFor="s-meetLink" className="text-text-main text-xs font-semibold uppercase tracking-wider">
+                  Video Call Link <span className="text-text-meta font-normal normal-case">(optional)</span>
                 </Label>
                 <Input
                   id="s-meetLink"
@@ -405,13 +405,13 @@ export default function MeetingsPage() {
                   placeholder="https://meet.google.com/xyz"
                   value={meetLink}
                   onChange={(e) => setMeetLink(e.target.value)}
-                  className="bg-[#0d1208] border-[#243018] text-[#e8f0e2] placeholder:text-[#4a6040]"
+                  className="bg-bg-main border-border-subtle text-text-main placeholder:text-text-meta"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="s-recordingUrl" className="text-[#e8f0e2] text-xs font-semibold uppercase tracking-wider">
-                  Recording URL <span className="text-[#4a6040] font-normal normal-case">(optional)</span>
+                <Label htmlFor="s-recordingUrl" className="text-text-main text-xs font-semibold uppercase tracking-wider">
+                  Recording URL <span className="text-text-meta font-normal normal-case">(optional)</span>
                 </Label>
                 <Input
                   id="s-recordingUrl"
@@ -419,20 +419,20 @@ export default function MeetingsPage() {
                   placeholder="https://drive.google.com/..."
                   value={recordingUrl}
                   onChange={(e) => setRecordingUrl(e.target.value)}
-                  className="bg-[#0d1208] border-[#243018] text-[#e8f0e2] placeholder:text-[#4a6040]"
+                  className="bg-bg-main border-border-subtle text-text-main placeholder:text-text-meta"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="s-notes" className="text-[#e8f0e2] text-xs font-semibold uppercase tracking-wider">
-                  Meeting Notes <span className="text-[#4a6040] font-normal normal-case">(optional)</span>
+                <Label htmlFor="s-notes" className="text-text-main text-xs font-semibold uppercase tracking-wider">
+                  Meeting Notes <span className="text-text-meta font-normal normal-case">(optional)</span>
                 </Label>
                 <Textarea
                   id="s-notes"
                   placeholder="Agenda points or post-meeting summary…"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="min-h-[100px] resize-y bg-[#0d1208] border-[#243018] text-[#e8f0e2] placeholder:text-[#4a6040]"
+                  className="min-h-[100px] resize-y bg-bg-main border-border-subtle text-text-main placeholder:text-text-meta"
                 />
               </div>
 
@@ -442,14 +442,14 @@ export default function MeetingsPage() {
                   type="button"
                   variant="outline"
                   onClick={closePanel}
-                  className="flex-1 border-[#243018] text-[#8aab7a] hover:bg-[#243018] hover:text-[#e8f0e2]"
+                  className="flex-1 border-border-subtle text-text-muted hover:bg-[#243018] hover:text-text-main"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={isSubmitting || isLoadingPartners}
-                  className="flex-1 bg-[#6abf30] hover:bg-[#4e9422] text-black font-bold"
+                  className="flex-1 bg-brand-accent hover:bg-[#4e9422] text-black font-bold"
                 >
                   {isSubmitting ? "Scheduling…" : "Schedule Meeting"}
                 </Button>

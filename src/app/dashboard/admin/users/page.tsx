@@ -1,4 +1,4 @@
-"use client"
+"use client" // Trigger reload
 
 import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -141,27 +141,27 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6 bg-[#0d1208] min-h-full text-[#e8f0e2]">
+    <div className="p-4 md:p-8 space-y-6 bg-bg-main min-h-full text-text-main">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">User Access Management</h1>
-          <p className="text-[#8aab7a] mt-2">
+          <h1 className="text-3xl font-bold tracking-tight text-text-main">User Access Management</h1>
+          <p className="text-text-muted mt-2">
             Manage partner hub users and their regional access permissions.
           </p>
         </div>
-        <Button onClick={() => setIsCreating(true)} className="bg-[#6abf30] hover:bg-[#4e9422] text-black font-bold">
+        <Button onClick={() => setIsCreating(true)} className="bg-brand-accent hover:bg-[#4e9422] text-black font-bold">
           + New Partner
         </Button>
       </div>
 
-      <div className="rounded-xl border border-[#243018] bg-[#121a0e] overflow-hidden">
+      <div className="rounded-xl border border-border-subtle bg-bg-card overflow-hidden">
         <Table>
-          <TableHeader className="bg-[#1a2413]">
+          <TableHeader className="bg-bg-hover">
             <TableRow>
-              <TableHead className="font-semibold text-[#e8f0e2] w-[300px]">Email</TableHead>
-              <TableHead className="font-semibold text-[#e8f0e2]">Role</TableHead>
-              <TableHead className="font-semibold text-[#e8f0e2]">Territory</TableHead>
-              <TableHead className="text-right font-semibold text-[#e8f0e2]">Actions</TableHead>
+              <TableHead className="font-semibold text-text-main w-[300px]">Email</TableHead>
+              <TableHead className="font-semibold text-text-main">Role</TableHead>
+              <TableHead className="font-semibold text-text-main">Territory</TableHead>
+              <TableHead className="text-right font-semibold text-text-main">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -185,7 +185,7 @@ export default function AdminUsersPage() {
               </TableRow>
             ) : (
               users.map((user) => (
-                <TableRow key={user.id} className="hover:bg-[#1a2413] border-b border-[#243018]">
+                <TableRow key={user.id} className="hover:bg-bg-hover border-b border-border-subtle">
                   <TableCell className="text-sm">{user.email ?? <span className="text-muted-foreground font-mono text-xs">{user.id.substring(0, 8)}…</span>}</TableCell>
                   <TableCell>
                     {user.is_admin ? (
@@ -223,10 +223,10 @@ export default function AdminUsersPage() {
       </div>
 
       <Dialog open={!!editingUser} onOpenChange={(open) => !open && !isSaving && setEditingUser(null)}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] bg-bg-card border-border-subtle text-text-main">
           <DialogHeader>
-            <DialogTitle>Edit User Access</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-text-main">Edit User Access</DialogTitle>
+            <DialogDescription className="text-text-muted">
               Change territory permissions for {editingUser?.id.substring(0, 8)}... They will be granted access to resources corresponding to this region.
             </DialogDescription>
           </DialogHeader>
@@ -237,7 +237,7 @@ export default function AdminUsersPage() {
               </label>
               <div className="col-span-3">
                 <Select value={selectedTerritory} onValueChange={(val) => setSelectedTerritory(val as Territory)}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full bg-bg-main border-border-subtle text-text-main">
                     <SelectValue placeholder="Select a territory" />
                   </SelectTrigger>
                   <SelectContent>
@@ -252,8 +252,8 @@ export default function AdminUsersPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingUser(null)} disabled={isSaving}>Cancel</Button>
-            <Button onClick={handleSave} disabled={isSaving || !selectedTerritory}>
+            <Button variant="outline" onClick={() => setEditingUser(null)} disabled={isSaving} className="border-border-subtle text-text-main hover:bg-bg-hover">Cancel</Button>
+            <Button onClick={handleSave} disabled={isSaving || !selectedTerritory} className="bg-brand-accent hover:bg-[#4e9422] text-black font-bold">
               {isSaving ? "Saving..." : "Save changes"}
             </Button>
           </DialogFooter>
@@ -262,11 +262,11 @@ export default function AdminUsersPage() {
 
       {/* Reset Password Dialog */}
       <Dialog open={!!resetUser} onOpenChange={(open) => !open && !isResetting && (setResetUser(null), setNewPassword(""))}>
-        <DialogContent className="sm:max-w-[400px] bg-[#121a0e] border-[#243018] text-white">
+        <DialogContent className="sm:max-w-[400px] bg-bg-card border-border-subtle text-text-main">
           <DialogHeader>
-            <DialogTitle className="text-white">Reset Partner Password</DialogTitle>
+            <DialogTitle className="text-text-main">Reset Partner Password</DialogTitle>
             <DialogDescription className="text-[#8F9BB3]">
-              Force-set a new password for <span className="text-[#6abf30] font-semibold">{resetUser?.email}</span>. No email confirmation required — share the new password directly with the partner.
+              Force-set a new password for <span className="text-brand-accent font-semibold">{resetUser?.email}</span>. No email confirmation required — share the new password directly with the partner.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleResetPassword}>
@@ -283,15 +283,15 @@ export default function AdminUsersPage() {
                   placeholder="Min. 6 characters"
                   required
                   minLength={6}
-                  className="bg-[#0d1208] border-[#243018] text-white focus-visible:ring-[#6abf30] focus-visible:border-[#6abf30]"
+                  className="bg-bg-main border-border-subtle text-text-main focus-visible:ring-[#6abf30] focus-visible:border-brand-accent"
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => { setResetUser(null); setNewPassword('') }} disabled={isResetting} className="border-[#243018] text-[#e8f0e2] hover:bg-[#1a2413]">
+              <Button type="button" variant="outline" onClick={() => { setResetUser(null); setNewPassword('') }} disabled={isResetting} className="border-border-subtle text-text-main hover:bg-bg-hover">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isResetting || newPassword.length < 6} className="bg-[#FF4C4C] hover:bg-[#e04444] text-white font-bold">
+              <Button type="submit" disabled={isResetting || newPassword.length < 6} className="bg-[#FF4C4C] hover:bg-[#e04444] text-text-main font-bold">
                 {isResetting ? "Resetting..." : "Force Reset"}
               </Button>
             </DialogFooter>
@@ -300,10 +300,10 @@ export default function AdminUsersPage() {
       </Dialog>
 
       <Dialog open={isCreating} onOpenChange={(open) => !open && !isSubmittingNew && setIsCreating(false)}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] bg-bg-card border-border-subtle text-text-main">
           <DialogHeader>
-            <DialogTitle>Create New Partner</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-text-main">Create New Partner</DialogTitle>
+            <DialogDescription className="text-text-muted">
               Create a new account that bypasses email confirmation. The credentials can be shared directly.
             </DialogDescription>
           </DialogHeader>
@@ -317,7 +317,7 @@ export default function AdminUsersPage() {
                   id="full_name"
                   name="full_name"
                   placeholder="Partner Name"
-                  className="col-span-3"
+                  className="col-span-3 bg-bg-main border-border-subtle text-text-main focus-visible:ring-[#6abf30] focus-visible:border-brand-accent placeholder:text-text-meta"
                   required
                 />
               </div>
@@ -330,7 +330,7 @@ export default function AdminUsersPage() {
                   name="email"
                   type="email"
                   placeholder="partner@example.com"
-                  className="col-span-3"
+                  className="col-span-3 bg-bg-main border-border-subtle text-text-main focus-visible:ring-[#6abf30] focus-visible:border-brand-accent placeholder:text-text-meta"
                   required
                 />
               </div>
@@ -342,7 +342,7 @@ export default function AdminUsersPage() {
                   id="password"
                   name="password"
                   type="password"
-                  className="col-span-3"
+                  className="col-span-3 bg-bg-main border-border-subtle text-text-main focus-visible:ring-[#6abf30] focus-visible:border-brand-accent placeholder:text-text-meta"
                   required
                   minLength={6}
                 />
@@ -353,7 +353,7 @@ export default function AdminUsersPage() {
                 </Label>
                 <div className="col-span-3">
                   <Select name="territory_code" required>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full bg-bg-main border-border-subtle text-text-main focus-visible:ring-[#6abf30] focus-visible:border-brand-accent">
                       <SelectValue placeholder="Assign a territory" />
                     </SelectTrigger>
                     <SelectContent>
@@ -368,10 +368,10 @@ export default function AdminUsersPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsCreating(false)} disabled={isSubmittingNew}>
+              <Button type="button" variant="outline" onClick={() => setIsCreating(false)} disabled={isSubmittingNew} className="border-border-subtle text-text-main hover:bg-bg-hover">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmittingNew} className="bg-[#6abf30] hover:bg-[#4e9422] text-black font-bold">
+              <Button type="submit" disabled={isSubmittingNew} className="bg-brand-accent hover:bg-[#4e9422] text-black font-bold">
                 {isSubmittingNew ? "Creating..." : "Create Partner"}
               </Button>
             </DialogFooter>

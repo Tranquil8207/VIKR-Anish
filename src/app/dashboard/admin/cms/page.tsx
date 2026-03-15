@@ -1,4 +1,4 @@
-"use client"
+"use client" // Trigger reload
 
 import React, { useState, useEffect } from "react"
 import { createProduct, createTrainingModule, createAnnouncement, getProducts } from "../../actions/admin"
@@ -230,10 +230,10 @@ export default function AdminCMSPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6 bg-[#0d1208] min-h-full text-[#e8f0e2]">
+    <div className="p-4 md:p-8 space-y-6 bg-bg-main min-h-full text-text-main">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">Content Management System</h1>
-        <p className="text-[#8aab7a] mt-2">
+        <h1 className="text-3xl font-bold tracking-tight text-text-main">Content Management System</h1>
+        <p className="text-text-muted mt-2">
           Manage product SKUs and upload region-specific hub documents.
         </p>
       </div>
