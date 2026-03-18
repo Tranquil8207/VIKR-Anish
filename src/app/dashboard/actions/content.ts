@@ -8,7 +8,7 @@ export async function getTrainingModules() {
   const supabase = await createClient()
 
   // Thanks to RLS, this will automatically only return modules 
-  // valid for the user's territory_code (or GLOBAL)
+  // valid for the user's territory_code
   const { data, error } = await supabase
     .from('training_modules')
     .select('*')

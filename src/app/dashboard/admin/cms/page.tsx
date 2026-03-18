@@ -1,7 +1,7 @@
-"use client"
+"use client" // Trigger reload
 
-import React, { useState } from "react"
-import { createProduct } from "../../actions/admin"
+import React, { useState, useEffect } from "react"
+import { createProduct, createTrainingModule, createAnnouncement, getProducts } from "../../actions/admin"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,7 +16,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 
-const REGIONS = ["GLOBAL", "MENA", "APAC", "EU", "NA", "LATAM", "AFRICA"]
+const REGIONS = ["GLOBAL", "UAE", "KSA", "North America", "Russia", "India"]
 const CATEGORIES = ["Hardware", "Software", "Services", "Accessories", "Cleaning", "Polishing", "Maintenance", "Restoration"]
 
 export default function AdminCMSPage() {
@@ -28,12 +28,12 @@ export default function AdminCMSPage() {
   const [isCreatingSku, setIsCreatingSku] = useState(false)
 
   // Document Form State
-  const [docProductId, setDocProductId] = useState("")
+  const [docProductId, setDocProductId] = useState("general")
   const [docTitle, setDocTitle] = useState("")
   const [docCategory, setDocCategory] = useState("TDS")
   const [documentFile, setDocumentFile] = useState<File | null>(null)
   const [selectedRegions, setSelectedRegions] = useState<string[]>([])
-  
+
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
 
@@ -59,12 +59,25 @@ export default function AdminCMSPage() {
   const [annIsPinned, setAnnIsPinned] = useState(false)
   const [isCreatingAnn, setIsCreatingAnn] = useState(false)
 
+  // Products Data
+  const [products, setProducts] = useState<{ id: string, name: string, sku: string }[]>([])
+
+  useEffect(() => {
+    async function fetchProducts() {
+      const res = await getProducts()
+      if (res.success && res.data) {
+        setProducts(res.data)
+      }
+    }
+    fetchProducts()
+  }, [])
+
   const handleCreateSKU = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!skuId || !skuName || !skuCategory) return
-    
+
     setIsCreatingSku(true)
-    
+
     const formData = new FormData()
     formData.append("sku", skuId)
     formData.append("name", skuName)
@@ -83,7 +96,7 @@ export default function AdminCMSPage() {
     } else {
       alert(`Error creating SKU: ${result.error}`)
     }
-    
+
     setIsCreatingSku(false)
   }
 
@@ -98,7 +111,7 @@ export default function AdminCMSPage() {
 
   const handleUploadDocument = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!documentFile) {
       setUploadError("Please select a file to upload.")
       return
@@ -108,15 +121,15 @@ export default function AdminCMSPage() {
       setUploadError("You must select at least one valid region before uploading.")
       return
     }
-    
-    if (!docProductId || !docTitle || !docCategory) {
+
+    if (!docTitle || !docCategory) {
       setUploadError("Please fill out all document details.")
       return
     }
 
     setIsUploading(true)
     setUploadError(null)
-    
+
     try {
       const formData = new FormData()
       formData.append("file", documentFile)
@@ -137,14 +150,14 @@ export default function AdminCMSPage() {
       }
 
       alert(`Document uploaded successfully for regions: ${selectedRegions.join(", ")}`)
-      
+
       // Reset form
-      setDocProductId("")
+      setDocProductId("general")
       setDocTitle("")
       setDocumentFile(null)
       setSelectedRegions([])
       // Keep category as user likely uploads multiples of same type
-      
+
     } catch (err: unknown) {
       setUploadError(err instanceof Error ? err.message : "An unknown error occurred")
     } finally {
@@ -168,12 +181,26 @@ export default function AdminCMSPage() {
     e.preventDefault()
     if (!trainTitle || !trainVideoUrl) return
     setIsCreatingTraining(true)
-    console.log("Creating Training Module", { trainTitle, trainDescription, trainVideoUrl, trainPdfUrl, trainCategory, trainMarketSegment })
-    alert("Training module created successfully (Mock)")
-    setTrainTitle("")
-    setTrainDescription("")
-    setTrainVideoUrl("")
-    setTrainPdfUrl("")
+
+    const formData = new FormData()
+    formData.append("title", trainTitle)
+    formData.append("description", trainDescription)
+    formData.append("video_url", trainVideoUrl)
+    formData.append("pdf_url", trainPdfUrl)
+    formData.append("category", trainCategory)
+    formData.append("market_segment", trainMarketSegment)
+
+    const result = await createTrainingModule(formData)
+    if (result.success) {
+      alert("Training module created successfully")
+      setTrainTitle("")
+      setTrainDescription("")
+      setTrainVideoUrl("")
+      setTrainPdfUrl("")
+    } else {
+      alert(`Error creating training module: ${result.error}`)
+    }
+
     setIsCreatingTraining(false)
   }
 
@@ -181,20 +208,32 @@ export default function AdminCMSPage() {
     e.preventDefault()
     if (!annTitle || !annContent) return
     setIsCreatingAnn(true)
-    console.log("Creating Announcement", { annTitle, annContent, annAttachmentUrl, annIsPinned })
-    alert("Announcement created successfully (Mock)")
-    setAnnTitle("")
-    setAnnContent("")
-    setAnnAttachmentUrl("")
-    setAnnIsPinned(false)
+
+    const formData = new FormData()
+    formData.append("title", annTitle)
+    formData.append("content", annContent)
+    if (annAttachmentUrl) formData.append("attachment_url", annAttachmentUrl)
+    formData.append("is_pinned", annIsPinned ? "true" : "false")
+
+    const result = await createAnnouncement(formData)
+    if (result.success) {
+      alert("Announcement created successfully")
+      setAnnTitle("")
+      setAnnContent("")
+      setAnnAttachmentUrl("")
+      setAnnIsPinned(false)
+    } else {
+      alert(`Error creating announcement: ${result.error}`)
+    }
+
     setIsCreatingAnn(false)
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 md:p-8 space-y-6 bg-bg-main min-h-full text-text-main">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Content Management System</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-2">
+        <h1 className="text-3xl font-bold tracking-tight text-text-main">Content Management System</h1>
+        <p className="text-text-muted mt-2">
           Manage product SKUs and upload region-specific hub documents.
         </p>
       </div>
@@ -281,14 +320,18 @@ export default function AdminCMSPage() {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="space-y-2">
-                  <Label htmlFor="docProductId">Product UUID</Label>
-                  <Input
-                    id="docProductId"
-                    placeholder="Database UUID config..."
-                    value={docProductId}
-                    onChange={(e) => setDocProductId(e.target.value)}
-                    required
-                  />
+                  <Label htmlFor="docProductId">Target Product</Label>
+                  <Select value={docProductId} onValueChange={setDocProductId} required>
+                    <SelectTrigger id="docProductId">
+                      <SelectValue placeholder="Select a product..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">None (General Document)</SelectItem>
+                      {products.map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.name} ({p.sku})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="docCategory">Doc Category</Label>
@@ -306,14 +349,14 @@ export default function AdminCMSPage() {
               </div>
 
               <div className="space-y-2">
-                 <Label htmlFor="docTitle">Document Title</Label>
-                 <Input
-                    id="docTitle"
-                    placeholder="e.g. NA Market Safety Guidelines 2026"
-                    value={docTitle}
-                    onChange={(e) => setDocTitle(e.target.value)}
-                    required
-                 />
+                <Label htmlFor="docTitle">Document Title</Label>
+                <Input
+                  id="docTitle"
+                  placeholder="e.g. NA Market Safety Guidelines 2026"
+                  value={docTitle}
+                  onChange={(e) => setDocTitle(e.target.value)}
+                  required
+                />
               </div>
 
               <div className="space-y-2">
@@ -369,14 +412,17 @@ export default function AdminCMSPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="mediaProductId">Product UUID</Label>
-                <Input
-                  id="mediaProductId"
-                  placeholder="Database UUID..."
-                  value={mediaProductId}
-                  onChange={(e) => setMediaProductId(e.target.value)}
-                  required
-                />
+                <Label htmlFor="mediaProductId">Target Product</Label>
+                <Select value={mediaProductId} onValueChange={setMediaProductId} required>
+                  <SelectTrigger id="mediaProductId">
+                    <SelectValue placeholder="Select a product..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name} ({p.sku})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="mediaType">Media Type</Label>
@@ -421,36 +467,36 @@ export default function AdminCMSPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-               <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="trainCategory">Category</Label>
-                    <Select value={trainCategory} onValueChange={setTrainCategory} required>
-                      <SelectTrigger id="trainCategory">
-                        <SelectValue placeholder="Category..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Sales">Sales</SelectItem>
-                        <SelectItem value="Safety">Safety</SelectItem>
-                        <SelectItem value="Application">Application</SelectItem>
-                        <SelectItem value="Onboarding">Onboarding</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="trainMarketSegment">Market Segment</Label>
-                     <Select value={trainMarketSegment} onValueChange={setTrainMarketSegment} required>
-                      <SelectTrigger id="trainMarketSegment">
-                        <SelectValue placeholder="Segment..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Hospitality">Hospitality</SelectItem>
-                        <SelectItem value="Healthcare">Healthcare</SelectItem>
-                        <SelectItem value="F&B">F&B</SelectItem>
-                        <SelectItem value="JanSan">JanSan</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="trainCategory">Category</Label>
+                  <Select value={trainCategory} onValueChange={setTrainCategory} required>
+                    <SelectTrigger id="trainCategory">
+                      <SelectValue placeholder="Category..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Sales">Sales</SelectItem>
+                      <SelectItem value="Safety">Safety</SelectItem>
+                      <SelectItem value="Application">Application</SelectItem>
+                      <SelectItem value="Onboarding">Onboarding</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="trainMarketSegment">Market Segment</Label>
+                  <Select value={trainMarketSegment} onValueChange={setTrainMarketSegment} required>
+                    <SelectTrigger id="trainMarketSegment">
+                      <SelectValue placeholder="Segment..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Hospitality">Hospitality</SelectItem>
+                      <SelectItem value="Healthcare">Healthcare</SelectItem>
+                      <SelectItem value="F&B">F&B</SelectItem>
+                      <SelectItem value="JanSan">JanSan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="trainTitle">Module Title</Label>
                 <Input

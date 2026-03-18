@@ -1,8 +1,8 @@
-
 import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
-import Link from "next/link"
-import { Users, FileText, Package, LayoutDashboard } from "lucide-react"
+import { Users, FileText, Package, LayoutDashboard, Video, LifeBuoy, Database, Key } from "lucide-react"
+import { NavItem } from "@/components/nav-item"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default async function DashboardLayout({
   children,
@@ -22,46 +22,70 @@ export default async function DashboardLayout({
   // Fetch profile to get territory
   const { data: profile } = await supabase
     .from("profiles")
-    .select("territory_code, role")
+    .select("territory_code, is_admin")
     .eq("id", user.id)
     .single()
 
   return (
-    <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="flex h-screen overflow-hidden bg-bg-main text-text-main">
       {/* Sidebar */}
-      <aside className="w-64 border-r bg-white dark:bg-zinc-900 dark:border-zinc-800 hidden md:flex flex-col">
-        <div className="p-6">
-          <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-            <span className="w-8 h-8 rounded-lg bg-zinc-900 text-white flex items-center justify-center">V</span>
-            VIKR Partner
-          </h1>
-          <div className="mt-2 text-xs text-muted-foreground px-1">
-            Territory: <span className="font-semibold text-foreground">{profile?.territory_code || "Unknown"}</span>
+      <aside className="w-[252px] border-r bg-bg-card border-border-subtle hidden md:flex flex-col">
+
+        {/* Logo */}
+        <div className="px-4 py-4 border-b border-border-subtle">
+          <img
+            src="/vikr-logo-new.svg"
+            alt="VIKR Bioscience"
+            className="h-[38px] w-auto max-w-[180px] object-contain object-left dark:invert-0 light-logo-invert"
+          />
+          <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.1em] text-text-muted">
+            Partner Hub &middot; Vikr Bioscience Pvt. Ltd.
           </div>
         </div>
-        
-        <nav className="flex-1 px-4 space-y-1">
-          <NavItem href="/dashboard" icon={<LayoutDashboard className="w-4 h-4" />} label="Overview" active />
-          <NavItem href="/dashboard/products" icon={<Package className="w-4 h-4" />} label="Products" />
-          <NavItem href="/dashboard/training" icon={<FileText className="w-4 h-4" />} label="Training" />
-          <NavItem href="/dashboard/meetings" icon={<Users className="w-4 h-4" />} label="Meetings" />
-          <NavItem href="/dashboard/support" icon={<FileText className="w-4 h-4" />} label="Support" />
-          <NavItem href="/dashboard/documents" icon={<FileText className="w-4 h-4" />} label="Documents" />
-          {profile?.role === 'admin' && (
-             <>
-               <NavItem href="/dashboard/admin/users" icon={<Users className="w-4 h-4" />} label="Admin Users" />
-               <NavItem href="/dashboard/admin/cms" icon={<Package className="w-4 h-4" />} label="Admin CMS" />
-               <NavItem href="/dashboard/admin/meetings" icon={<Users className="w-4 h-4" />} label="Admin Meetings" />
-             </>
+
+        {/* User block */}
+        <div className="px-4 py-3 border-b border-border-subtle flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1a3a5c] to-[#0a8cc4] flex items-center justify-center text-[11px] font-extrabold text-white shrink-0">
+            {profile?.territory_code?.slice(0, 2) || "VI"}
+          </div>
+          <div className="min-w-0">
+            <div className="text-[11px] font-bold truncate text-text-main">Distributor Partner</div>
+            <div className="text-[10px] font-semibold text-text-brand">
+              Region: {profile?.territory_code || "Unknown"}
+            </div>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto py-2">
+          <div className="text-[9px] uppercase tracking-[0.12em] text-text-meta font-bold px-4 mt-3 mb-1">Main</div>
+          <NavItem href="/dashboard" icon={<LayoutDashboard className="w-[15px] h-[15px]" />} label="Dashboard" />
+          <NavItem href="/dashboard/products" icon={<Package className="w-[15px] h-[15px]" />} label="Product Catalog" />
+          <NavItem href="/dashboard/training" icon={<Video className="w-[15px] h-[15px]" />} label="Training Hub" />
+
+          <div className="text-[9px] uppercase tracking-[0.12em] text-text-meta font-bold px-4 mt-4 mb-1">Communication</div>
+          <NavItem href="/dashboard/meetings" icon={<Users className="w-[15px] h-[15px]" />} label="Meetings" />
+          <NavItem href="/dashboard/support" icon={<LifeBuoy className="w-[15px] h-[15px]" />} label="Support Requests" />
+
+          <div className="text-[9px] uppercase tracking-[0.12em] text-text-meta font-bold px-4 mt-4 mb-1">Resources</div>
+          <NavItem href="/dashboard/documents" icon={<FileText className="w-[15px] h-[15px]" />} label="Documents" />
+
+          {profile?.is_admin === true && (
+            <>
+              <div className="text-[9px] uppercase tracking-[0.12em] text-text-meta font-bold px-4 mt-4 mb-1">Admin</div>
+              <NavItem href="/dashboard/admin/users" icon={<Key className="w-[15px] h-[15px]" />} label="Partner Access" />
+              <NavItem href="/dashboard/admin/cms" icon={<Database className="w-[15px] h-[15px]" />} label="Data Control" />
+            </>
           )}
         </nav>
 
-        <div className="p-4 border-t dark:border-zinc-800">
-           <form action="/auth/signout" method="post">
-              <button className="flex w-full items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors">
-                Sign Out
-              </button>
-           </form>
+        <div className="p-3 border-t border-border-subtle bg-bg-card shrink-0 space-y-2 mt-auto">
+          <ThemeToggle />
+          <form action="/auth/signout" method="post">
+            <button className="flex w-full items-center justify-center gap-2 px-3 py-2 text-xs font-bold tracking-wide text-[#FF4C4C] hover:bg-[#FF4C4C]/10 rounded-md transition-all border border-transparent hover:border-[#FF4C4C]/20 uppercase">
+              Sign Out
+            </button>
+          </form>
         </div>
       </aside>
 
@@ -73,19 +97,3 @@ export default async function DashboardLayout({
   )
 }
 
-function NavItem({ href, icon, label, active }: { href: string; icon: React.ReactNode; label: string; active?: boolean }) {
-  // In a real app, use usePathname to determine active state
-  return (
-    <Link 
-      href={href}
-      className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-        active 
-          ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50" 
-          : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:text-zinc-50 dark:hover:bg-zinc-800"
-      }`}
-    >
-      {icon}
-      {label}
-    </Link>
-  )
-}

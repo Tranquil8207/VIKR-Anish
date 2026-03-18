@@ -1,26 +1,75 @@
 @import "tailwindcss";
 
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Common variables */
+  --brand-accent: #6abf30;
+
+  /* Light mode (Default) */
+  --bg-main: #fcfdfc;
+  --bg-card: #ffffff;
+  --bg-hover: #f1f5f1;
+  --border-subtle: #e2e8e0;
+
+  --text-main: #111811;
+  --text-muted: #5c7550;
+  --text-meta: #819875;
+
+  --bg-gradient-start: #eef5ea;
+  --bg-gradient-end: #f8fbf5;
+
+  --text-brand: #4e9422;
+  /* darker green for text */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark,
+[data-theme="dark"] {
+  --bg-main: #0d1208;
+  --bg-card: #121a0e;
+  --bg-hover: #1a2413;
+  --border-subtle: #243018;
+
+  --text-main: #e8f0e2;
+  --text-muted: #8aab7a;
+  --text-meta: #4a6040;
+
+  --bg-gradient-start: #0f2010;
+  --bg-gradient-end: #061008;
+
+  --text-brand: #6abf30;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@theme {
+  --color-bg-main: var(--bg-main);
+  --color-bg-card: var(--bg-card);
+  --color-bg-hover: var(--bg-hover);
+  --color-border-subtle: var(--border-subtle);
+
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-text-meta: var(--text-meta);
+  --color-text-brand: var(--text-brand);
+
+  --color-bg-grad-start: var(--bg-gradient-start);
+  --color-bg-grad-end: var(--bg-gradient-end);
+
+  --color-brand-accent: var(--brand-accent);
+
+  --font-sans: var(--font-poppins);
+  --font-syne: var(--font-poppins);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-main);
+  color: var(--text-main);
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+/* For dark mode logo in light theme: inverts white to black, rotates green back to green */
+.light-logo-invert {
+  filter: invert(1) hue-rotate(180deg) brightness(1.2);
+}
+
+.dark .light-logo-invert {
+  filter: none;
 }

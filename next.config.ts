@@ -13,6 +13,14 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactStrictMode: true,
   turbopack: {},
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "rqbnsffbqthxckzifefk.supabase.co",
+      },
+    ],
+  },
 };
 
 export default withPWA(nextConfig);

@@ -27,16 +27,42 @@ export async function getSecureDocumentUrl(documentId: string, expiresInSeconds:
 
     if (error) throw error
 
-    return { 
-      success: true, 
-      url: data.signedUrl 
+    return {
+      success: true,
+      url: data.signedUrl
     }
-    
+
   } catch (error) {
     console.error('Error generating secure document URL:', error)
-    return { 
-      success: false, 
-      error: 'Failed to generate secure link. Ensure you have permission to view this document.' 
+    return {
+      success: false,
+      error: 'Failed to generate secure link. Ensure you have permission to view this document.'
     }
+  }
+}
+
+export async function getAllDocuments() {
+  const supabase = await createClient()
+
+  try {
+    // Due to RLS, documents fetching will automatically be filtered
+    // by the user's territory_code. We also try to fetch the associated product name.
+    const { data, error } = await supabase
+      .from('documents')
+      .select(`
+        *,
+        products (
+          name,
+          sku
+        )
+      `)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    return { success: true, data }
+  } catch (error: unknown) {
+    console.error('Error fetching documents:', error)
+    return { success: false, data: null, error: error instanceof Error ? error.message : "Unknown error" }
   }
 }

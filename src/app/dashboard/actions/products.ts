@@ -13,7 +13,8 @@ export async function getProductsWithDocuments() {
     .from('products')
     .select(`
       *,
-      documents (*)
+      documents (*),
+      product_media (*)
     `)
     .eq('is_active', true)
     .order('name', { ascending: true })

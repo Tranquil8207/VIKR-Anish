@@ -16,18 +16,22 @@ export async function POST(request: Request) {
     // 2. Parse FormData
     const formData = await request.formData()
     const file = formData.get('file') as File
-    const productId = formData.get('product_id') as string
+    const productId = formData.get('product_id') as string // might be 'general'
     const title = formData.get('title') as string
     const category = formData.get('category') as Database['public']['Enums']['document_category']
     const regions = formData.getAll('valid_regions') as string[]
 
-    if (!file || !productId || !title || !category || regions.length === 0) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    if (!file || !title || !category || regions.length === 0) {
+      return NextResponse.json({ error: 'Missing required title, category, fields, or regions' }, { status: 400 })
     }
 
     // 3. Upload File to Storage
+    const isGeneral = !productId || productId === 'general'
+    const folderName = isGeneral ? 'general' : productId
+
     const fileExt = file.name.split('.').pop()
-    const fileName = `${productId}/${Date.now()}.${fileExt}`
+    const fileName = `${folderName}/${Date.now()}.${fileExt}`
+
     const { error: uploadError } = await supabase.storage
       .from('secure_documents')
       .upload(fileName, file)
@@ -38,7 +42,7 @@ export async function POST(request: Request) {
     const { error: dbError } = await supabase
       .from('documents')
       .insert({
-        product_id: productId,
+        product_id: isGeneral ? null : productId,
         title,
         file_url: fileName, // The path inside the bucket
         category,
