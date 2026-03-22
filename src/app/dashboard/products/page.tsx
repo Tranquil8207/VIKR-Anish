@@ -1,10 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Package, FileText, Filter, Search } from "lucide-react"
+import { Package, FileText, Filter, Search, X } from "lucide-react"
+import { getSecureDocumentUrl } from "@/app/dashboard/actions/document"
 import { getProductsWithDocuments } from "@/app/dashboard/actions/products"
+import { checkIsAdminBoolean } from "@/app/dashboard/actions/admin"
 import { ShareDocumentButton } from "@/components/ShareDocumentButton"
 import Link from "next/link"
 import Image from "next/image"
@@ -12,6 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { EditProductModal, EditableProduct } from "@/components/EditProductModal"
+import { DeleteProductModal } from "@/components/DeleteProductModal"
 
 // Type Definitions
 type ProductMedia = {
@@ -59,9 +64,35 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
+  const [openingDocId, setOpeningDocId] = useState<string | null>(null)
+  const [viewingDoc, setViewingDoc] = useState<{ doc: Document, url: string, isImage: boolean } | null>(null)
+
+  const handleViewDocument = async (doc: Document) => {
+    setOpeningDocId(doc.id)
+    try {
+      const { success, url, error } = await getSecureDocumentUrl(doc.id)
+      if (success && url) {
+        const isImg = await new Promise<boolean>((resolve) => {
+          const img = new window.Image()
+          img.onload = () => resolve(true)
+          img.onerror = () => resolve(false)
+          img.src = url
+        })
+        setViewingDoc({ doc, url, isImage: isImg })
+      } else {
+        alert(error || 'Failed to open document')
+      }
+    } catch (err) {
+      console.error('Error opening document:', err)
+      alert('An error occurred while trying to open the document.')
+    } finally {
+      setOpeningDocId(null)
+    }
+  }
 
   useEffect(() => {
     async function loadProducts() {
@@ -75,7 +106,13 @@ export default function ProductsPage() {
       setIsLoading(false)
     }
 
+    async function loadAdminStatus() {
+      const res = await checkIsAdminBoolean()
+      setIsAdmin(res)
+    }
+
     loadProducts()
+    loadAdminStatus()
   }, [])
 
   const toggleCategory = (category: string) => {
@@ -138,32 +175,54 @@ export default function ProductsPage() {
             />
           </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-fit flex items-center gap-2 border-border-subtle bg-bg-main">
-                <Filter className="w-4 h-4" />
-                Categories
-                {selectedCategories.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 px-1.5 py-0.5 text-[10px]">
-                    {selectedCategories.length}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-bg-card border-border-subtle shadow-md">
-              <DropdownMenuLabel>Filter by Category</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-border-subtle" />
-              {CATEGORIES.map((category) => (
-                <DropdownMenuCheckboxItem
-                  key={category}
-                  checked={selectedCategories.includes(category)}
-                  onCheckedChange={() => toggleCategory(category)}
-                >
-                  {category}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <EditProductModal
+                products={products}
+                onSuccess={() => {
+                  getProductsWithDocuments().then(res => {
+                    if (res.success && res.data) setProducts(res.data as Product[])
+                  })
+                }}
+              />
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-fit flex items-center gap-2 border-border-subtle bg-bg-main">
+                  <Filter className="w-4 h-4" />
+                  Categories
+                  {selectedCategories.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 px-1.5 py-0.5 text-[10px]">
+                      {selectedCategories.length}
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-bg-card border-border-subtle shadow-md">
+                <DropdownMenuLabel>Filter by Category</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-border-subtle" />
+                {CATEGORIES.map((category) => (
+                  <DropdownMenuCheckboxItem
+                    key={category}
+                    checked={selectedCategories.includes(category)}
+                    onCheckedChange={() => toggleCategory(category)}
+                  >
+                    {category}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {isAdmin && (
+              <DeleteProductModal
+                products={products}
+                onSuccess={() => {
+                  getProductsWithDocuments().then(res => {
+                    if (res.success && res.data) setProducts(res.data as Product[])
+                  })
+                }}
+              />
+            )}
+          </div>
         </div>
       </div>
 
@@ -227,7 +286,17 @@ export default function ProductsPage() {
                   </Card>
                 </DialogTrigger>
 
-                <DialogContent className="max-w-5xl p-0 overflow-hidden bg-bg-card gap-0 border-border-subtle">
+                <DialogContent
+                  className="max-w-5xl p-0 overflow-hidden bg-bg-card gap-0 border-border-subtle"
+                  onPointerDownOutside={(e) => { if (viewingDoc) e.preventDefault(); }}
+                  onInteractOutside={(e) => { if (viewingDoc) e.preventDefault(); }}
+                  onEscapeKeyDown={(e) => {
+                    if (viewingDoc) {
+                      e.preventDefault();
+                      setViewingDoc(null);
+                    }
+                  }}
+                >
                   <div className="flex flex-col md:flex-row max-h-[85vh]">
                     {/* Dialog Left: Large Image & Varieties */}
                     {getVarietiesForProduct(product.name).length > 0 ? (
@@ -396,18 +465,28 @@ export default function ProductsPage() {
                         {product.documents && product.documents.length > 0 && (
                           <div>
                             <h4 className="text-xs font-bold uppercase tracking-wider text-text-muted mb-4 border-b border-border-subtle pb-2">Available Documents</h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="flex flex-col gap-4">
                               {product.documents.map((doc) => (
-                                <div key={doc.id} className="flex flex-col gap-2 p-3 rounded-lg bg-bg-hover border border-border-subtle transition-colors">
-                                  <div className="flex items-center gap-2">
-                                    <FileText className="w-4 h-4 text-text-brand shrink-0" />
-                                    <span className="text-sm font-medium line-clamp-1 flex-1">{doc.title}</span>
+                                <div
+                                  key={doc.id}
+                                  onClick={(e) => { e.stopPropagation(); handleViewDocument(doc); }}
+                                  className="flex flex-col justify-between gap-3 p-4 rounded-xl bg-bg-hover border border-border-subtle transition-colors cursor-pointer hover:border-brand-accent/50 hover:bg-bg-hover/80 group min-h-[120px]"
+                                >
+                                  <div className="flex items-start gap-3">
+                                    {openingDocId === doc.id ? (
+                                      <div className="w-5 h-5 border-2 border-brand-accent border-t-transparent rounded-full animate-spin shrink-0" />
+                                    ) : (
+                                      <FileText className="w-5 h-5 text-text-brand shrink-0 mt-0.5 group-hover:text-brand-accent transition-colors" />
+                                    )}
+                                    <span className="text-sm font-semibold leading-snug line-clamp-2 flex-1 group-hover:text-brand-accent transition-colors">{doc.title}</span>
                                   </div>
-                                  <div className="flex justify-between items-center mt-1">
-                                    <Badge variant="outline" className="text-[10px] leading-none py-0.5 px-1.5 font-mono border-border-subtle h-auto text-text-muted">
+                                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mt-auto">
+                                    <Badge variant="outline" className="text-[10px] leading-none py-1 px-2 font-bold font-mono border-border-subtle h-auto text-text-muted bg-bg-main">
                                       {doc.category}
                                     </Badge>
-                                    <ShareDocumentButton documentId={doc.id} title={doc.title} />
+                                    <div onClick={(e) => e.stopPropagation()} className="w-full sm:w-auto">
+                                      <ShareDocumentButton documentId={doc.id} title={doc.title} />
+                                    </div>
                                   </div>
                                 </div>
                               ))}
@@ -431,6 +510,55 @@ export default function ProductsPage() {
           </div>
         )}
       </main>
+
+      {/* Document Viewer Modal - Custom Overlay to dodge Radix nested Dialog traps */}
+      {viewingDoc && typeof document !== 'undefined' ? createPortal(
+        <div className="fixed inset-0 flex items-center justify-center bg-black/80 p-4" style={{ zIndex: 99999, pointerEvents: 'auto' }}>
+          <div className="absolute inset-0 cursor-pointer" onClick={() => setViewingDoc(null)} />
+
+          <div
+            className="relative flex flex-col bg-bg-card border-border-subtle rounded-xl shadow-2xl overflow-hidden"
+            style={{
+              zIndex: 100000,
+              borderColor: '#243018',
+              borderWidth: '1px',
+              width: viewingDoc.isImage ? 'fit-content' : 'calc(100vw - 40px)',
+              height: viewingDoc.isImage ? 'fit-content' : 'calc(100vh - 40px)',
+              maxWidth: 'calc(100vw - 40px)',
+              maxHeight: 'calc(100vh - 40px)',
+              padding: '20px',
+              display: 'flex'
+            }}>
+            <div className="flex flex-shrink-0 justify-between items-start pb-4">
+              <h2 className="text-xl font-bold text-text-main pr-8">{viewingDoc.doc.title}</h2>
+              <button onClick={(e) => { e.stopPropagation(); setViewingDoc(null); }} className="p-1.5 rounded-md opacity-70 hover:opacity-100 bg-bg-hover hover:bg-bg-main border border-border-subtle absolute right-4 top-4 transition-all focus:outline-none focus:ring-2 focus:ring-brand-accent">
+                <X className="w-5 h-5 text-text-main" />
+              </button>
+            </div>
+            <div
+              className="w-full bg-white relative rounded-lg border border-border-subtle overflow-hidden flex items-center justify-center flex-1 shrink-0"
+              style={{
+                minHeight: viewingDoc.isImage ? 'auto' : '50vh',
+                maxHeight: viewingDoc.isImage ? 'calc(100vh - 120px)' : 'calc(100vh - 120px)'
+              }}>
+              {viewingDoc.isImage ? (
+                <img
+                  src={viewingDoc.url}
+                  alt={viewingDoc.doc.title}
+                  style={{ maxWidth: '100%', maxHeight: 'calc(100vh - 120px)', objectFit: 'contain', display: 'block' }}
+                />
+              ) : (
+                <iframe
+                  src={viewingDoc.url}
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                  title={viewingDoc.doc.title}
+                />
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      ) : null}
     </div>
   )
 }

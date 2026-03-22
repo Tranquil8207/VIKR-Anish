@@ -65,7 +65,7 @@ export default function DashboardPage() {
           Welcome to <span className="text-brand-accent">VIKR Partner Hub</span>
         </h1>
         <p className="relative z-10 mt-1 max-w-xl text-sm leading-relaxed text-text-muted">
-          Your central platform for product information, training, announcements and partner support — powered by Vikr Bioscience Pvt. Ltd., Gujarat.
+          Your central platform for product information, training, announcements and partner support — powered by Vikr Bioscience Pvt. Ltd., India.
         </p>
 
       </div>

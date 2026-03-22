@@ -18,7 +18,7 @@ export async function createSupportTicket(formData: FormData) {
 
   // Get current user id
   const { data: { user }, error: authError } = await supabase.auth.getUser()
-  
+
   if (authError || !user) {
     return { success: false, error: 'Not authenticated' }
   }
@@ -44,6 +44,12 @@ export async function createSupportTicket(formData: FormData) {
 export async function getMyTickets() {
   const supabase = await createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, data: null, error: 'Not authenticated', isAdmin: false }
+
+  const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
+  const isAdmin = profile?.is_admin || false
+
   // RLS ensures they only see their own tickets
   const { data, error } = await supabase
     .from('support_tickets')
@@ -52,8 +58,47 @@ export async function getMyTickets() {
 
   if (error) {
     console.error('Error fetching support tickets:', error)
-    return { success: false, data: null, error: error.message }
+    return { success: false, data: null, error: error.message, isAdmin }
   }
 
-  return { success: true, data }
+  // Manually attach profiles to bypass any Supabase relationship cache issues
+  if (data && data.length > 0 && isAdmin) {
+    const partnerIds = Array.from(new Set(data.map(t => t.partner_id)))
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('id, full_name, company_name')
+      .in('id', partnerIds)
+
+    if (profilesData) {
+      const profileMap = Object.fromEntries(profilesData.map(p => [p.id, p]))
+      data.forEach(t => {
+        (t as any).profiles = profileMap[t.partner_id] || null
+      })
+    }
+  }
+
+  return { success: true, data, isAdmin }
+}
+
+export async function updateTicketStatus(ticket_id: string, status: Database['public']['Enums']['ticket_status']) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
+  if (!profile?.is_admin) return { success: false, error: 'Unauthorized' }
+
+  const { error } = await supabase
+    .from('support_tickets')
+    .update({ status })
+    .eq('ticket_id', ticket_id)
+
+  if (error) {
+    console.error('Error updating ticket status:', error)
+    return { success: false, error: 'Failed to update ticket.' }
+  }
+
+  revalidatePath('/dashboard/support')
+  return { success: true }
 }

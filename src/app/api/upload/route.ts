@@ -21,13 +21,16 @@ export async function POST(request: Request) {
     const category = formData.get('category') as Database['public']['Enums']['document_category']
     const regions = formData.getAll('valid_regions') as string[]
 
+    if (!productId || productId === 'general') {
+      return NextResponse.json({ error: 'Missing target product' }, { status: 400 })
+    }
+
     if (!file || !title || !category || regions.length === 0) {
       return NextResponse.json({ error: 'Missing required title, category, fields, or regions' }, { status: 400 })
     }
 
     // 3. Upload File to Storage
-    const isGeneral = !productId || productId === 'general'
-    const folderName = isGeneral ? 'general' : productId
+    const folderName = productId
 
     const fileExt = file.name.split('.').pop()
     const fileName = `${folderName}/${Date.now()}.${fileExt}`
@@ -42,7 +45,7 @@ export async function POST(request: Request) {
     const { error: dbError } = await supabase
       .from('documents')
       .insert({
-        product_id: isGeneral ? null : productId,
+        product_id: productId,
         title,
         file_url: fileName, // The path inside the bucket
         category,

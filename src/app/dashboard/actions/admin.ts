@@ -48,6 +48,25 @@ async function requireAdmin(supabase: any) {
   return user
 }
 
+export async function checkIsAdminBoolean() {
+  const supabase = await createClient()
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) return false
+
+    const supabaseAdmin = createAdminClient()
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single()
+
+    return profile?.is_admin === true
+  } catch (e) {
+    return false
+  }
+}
+
 // ------------------------------------------------------------------
 // USER MANAGEMENT (Phase 3.3)
 // ------------------------------------------------------------------
@@ -178,6 +197,31 @@ export async function resetPartnerPassword(partnerId: string, newPassword: strin
   }
 }
 
+export async function deletePartner(partnerId: string) {
+  const supabase = await createClient()
+
+  try {
+    const user = await requireAdmin(supabase)
+
+    // Prevent self-deletion
+    if (user.id === partnerId) {
+      throw new Error('Cannot delete your own account')
+    }
+
+    const supabaseAdmin = createAdminClient()
+
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(partnerId)
+
+    if (error) throw error
+
+    revalidatePath('/dashboard/admin/users')
+    return { success: true }
+  } catch (error: unknown) {
+    console.error('Error deleting partner:', error)
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
+  }
+}
+
 // ------------------------------------------------------------------
 // CONTENT MANAGEMENT (Phase 3.4 - Partial)
 // ------------------------------------------------------------------
@@ -208,19 +252,124 @@ export async function createProduct(formData: FormData) {
     const name = formData.get('name') as string
     const category = formData.get('category') as string
     const ph_level = parseFloat(formData.get('ph_level') as string)
+    const description = formData.get('description') as string
+    const usp = formData.get('usp') as string
+    const features_benefits = formData.get('features_benefits') as string
+    const applications = formData.get('applications') as string
+    const ingredients = formData.get('ingredients') as string
+    const directions_to_use = formData.get('directions_to_use') as string
 
     if (!sku || !name) throw new Error('SKU and Name are required')
 
     const { error } = await supabase
       .from('products')
-      .insert({ sku, name, category, ph_level: isNaN(ph_level) ? null : ph_level })
+      .insert({
+        sku,
+        name,
+        category,
+        ph_level: isNaN(ph_level) ? null : ph_level,
+        description: description || null,
+        usp: usp || null,
+        features_benefits: features_benefits || null,
+        applications: applications || null,
+        ingredients: ingredients || null,
+        directions_to_use: directions_to_use || null
+      })
 
     if (error) throw error
+
+    await supabase.from('announcements').insert({
+      title: `New Product Added: ${name}`,
+      content: `${name} (SKU: ${sku}) is now available in our catalog.`,
+      is_pinned: false,
+      valid_regions: ['GLOBAL'] as any
+    })
 
     revalidatePath('/dashboard/admin/cms')
     return { success: true }
   } catch (error: unknown) {
     console.error('Error creating product:', error)
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
+  }
+}
+
+export async function updateProduct(formData: FormData) {
+  const supabase = await createClient()
+
+  try {
+    await requireAdmin(supabase)
+
+    const id = formData.get('id') as string
+    const sku = formData.get('sku') as string
+    const name = formData.get('name') as string
+    const category = formData.get('category') as string
+    const ph_level = parseFloat(formData.get('ph_level') as string)
+    const description = formData.get('description') as string
+    const usp = formData.get('usp') as string
+    const features_benefits = formData.get('features_benefits') as string
+    const applications = formData.get('applications') as string
+    const ingredients = formData.get('ingredients') as string
+    const directions_to_use = formData.get('directions_to_use') as string
+
+    if (!id || !sku || !name) throw new Error('ID, SKU, and Name are required')
+
+    const { error } = await supabase
+      .from('products')
+      .update({
+        sku,
+        name,
+        category: category || null,
+        ph_level: isNaN(ph_level) ? null : ph_level,
+        description: description || null,
+        usp: usp || null,
+        features_benefits: features_benefits || null,
+        applications: applications || null,
+        ingredients: ingredients || null,
+        directions_to_use: directions_to_use || null
+      })
+      .eq('id', id)
+
+    if (error) throw error
+
+    revalidatePath('/dashboard/products')
+    return { success: true }
+  } catch (error: unknown) {
+    console.error('Error updating product:', error)
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
+  }
+}
+
+export async function deleteProducts(ids: string[]) {
+  const supabase = await createClient()
+
+  try {
+    await requireAdmin(supabase)
+
+    if (!ids || ids.length === 0) throw new Error('No product IDs provided')
+
+    const { data: prods } = await supabase.from('products').select('name').in('id', ids)
+
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .in('id', ids)
+
+    if (error) throw error
+
+    if (prods && prods.length > 0) {
+      const announcementsToInsert = prods.map(p => ({
+        title: `Product Removed: ${p.name}`,
+        content: `Please note that ${p.name} has been removed from the active catalog.`,
+        is_pinned: false,
+        valid_regions: ['GLOBAL'] as any
+      }))
+      await supabase.from('announcements').insert(announcementsToInsert)
+    }
+
+    revalidatePath('/dashboard/products')
+    return { success: true }
+  } catch (error: unknown) {
+    console.error('Error deleting products:', error)
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
   }
 }
@@ -280,32 +429,132 @@ export async function createTrainingModule(formData: FormData) {
     const title = formData.get('title') as string
     const description = formData.get('description') as string
     const video_url = formData.get('video_url') as string
+    const durRaw = formData.get('duration_seconds') as string
+    const duration_seconds = durRaw ? parseInt(durRaw) : null
     const pdf_url = formData.get('pdf_url') as string
     const category = formData.get('category') as string
     const market_segment = formData.get('market_segment') as string
+    const valid_regions = formData.getAll('valid_regions') as string[]
 
     if (!title || !video_url) {
       throw new Error('Title and Video URL are required')
     }
 
+    const match = video_url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)
+    const youtube_video_id = match ? match[1] : 'unknown_id'
+
+    const finalRegions = valid_regions.length > 0 ? valid_regions : ['GLOBAL']
+
     const { error } = await supabase
-      .from('training_modules')
+      .from('training_hub_videos')
       .insert({
         title,
         description: description || null,
         video_url,
-        pdf_url: pdf_url || null,
+        duration_seconds,
+        youtube_video_id,
+        pdf_resource_url: pdf_url || null,
         category,
-        market_segment
+        market_segment,
+        valid_regions: finalRegions as any
       })
 
     if (error) throw error
+
+    await supabase.from('announcements').insert({
+      title: `New Training Video: ${title}`,
+      content: `A new training module has been published under ${category}.`,
+      is_pinned: false,
+      valid_regions: finalRegions as any
+    })
 
     revalidatePath('/dashboard/training')
     revalidatePath('/dashboard/admin/cms')
     return { success: true }
   } catch (error: unknown) {
     console.error('Error creating training module:', error)
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
+  }
+}
+
+export async function updateTrainingModule(formData: FormData) {
+  const supabase = await createClient()
+
+  try {
+    await requireAdmin(supabase)
+
+    const id = formData.get('id') as string
+    const title = formData.get('title') as string
+    const description = formData.get('description') as string
+    const video_url = formData.get('video_url') as string
+    const durRaw = formData.get('duration_seconds') as string
+    const duration_seconds = durRaw ? parseInt(durRaw) : null
+    const pdf_url = formData.get('pdf_url') as string
+    const category = formData.get('category') as string
+    const market_segment = formData.get('market_segment') as string
+
+    if (!id || !title || !video_url) {
+      throw new Error('ID, Title, and Video URL are required')
+    }
+
+    const match = video_url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)
+    const youtube_video_id = match ? match[1] : 'unknown_id'
+
+    const { error } = await supabase
+      .from('training_hub_videos')
+      .update({
+        title,
+        description: description || null,
+        video_url,
+        duration_seconds,
+        youtube_video_id,
+        pdf_resource_url: pdf_url || null,
+        category,
+        market_segment
+      })
+      .eq('id', id)
+
+    if (error) throw error
+
+    revalidatePath('/dashboard/training')
+    return { success: true }
+  } catch (error: unknown) {
+    console.error('Error updating training module:', error)
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
+  }
+}
+
+export async function deleteTrainingModules(ids: string[]) {
+  const supabase = await createClient()
+
+  try {
+    await requireAdmin(supabase)
+
+    if (!ids || ids.length === 0) throw new Error('No video IDs provided')
+
+    const { data: modules } = await supabase.from('training_hub_videos').select('title, valid_regions').in('id', ids)
+
+    const { error } = await supabase
+      .from('training_hub_videos')
+      .delete()
+      .in('id', ids)
+
+    if (error) throw error
+
+    if (modules && modules.length > 0) {
+      const announcementsToInsert = modules.map(m => ({
+        title: `Training Video Removed: ${m.title}`,
+        content: `The training module "${m.title}" is no longer available.`,
+        is_pinned: false,
+        valid_regions: m.valid_regions
+      }))
+      await supabase.from('announcements').insert(announcementsToInsert)
+    }
+
+    revalidatePath('/dashboard/training')
+    return { success: true }
+  } catch (error: unknown) {
+    console.error('Error deleting training modules:', error)
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
   }
 }
@@ -320,10 +569,13 @@ export async function createAnnouncement(formData: FormData) {
     const content = formData.get('content') as string
     const attachment_url = formData.get('attachment_url') as string
     const is_pinned = formData.get('is_pinned') === 'true'
+    const valid_regions = formData.getAll('valid_regions') as string[]
 
     if (!title || !content) {
       throw new Error('Title and Content are required')
     }
+
+    const finalRegions = valid_regions.length > 0 ? valid_regions : ['GLOBAL']
 
     const { error } = await supabase
       .from('announcements')
@@ -331,7 +583,8 @@ export async function createAnnouncement(formData: FormData) {
         title,
         content,
         attachment_url: attachment_url || null,
-        is_pinned
+        is_pinned,
+        valid_regions: finalRegions as Database['public']['Enums']['territory'][]
       })
 
     if (error) throw error

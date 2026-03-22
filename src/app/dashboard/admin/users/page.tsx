@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { getPartners, updatePartnerTerritory, createPartner, resetPartnerPassword } from "../../actions/admin"
+import { getPartners, updatePartnerTerritory, createPartner, resetPartnerPassword, deletePartner } from "../../actions/admin"
 import {
   Table,
   TableBody,
@@ -59,6 +59,9 @@ export default function AdminUsersPage() {
   const [resetUser, setResetUser] = useState<UserProfile | null>(null)
   const [newPassword, setNewPassword] = useState("")
   const [isResetting, setIsResetting] = useState(false)
+
+  const [deletingUser, setDeletingUser] = useState<UserProfile | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const fetchUsers = async () => {
     setIsLoading(true)
@@ -140,6 +143,22 @@ export default function AdminUsersPage() {
     setIsResetting(false)
   }
 
+  const handleDeletePartner = async () => {
+    if (!deletingUser) return
+    setIsDeleting(true)
+
+    const result = await deletePartner(deletingUser.id)
+
+    if (result.success) {
+      setUsers(users.filter(u => u.id !== deletingUser.id))
+      setDeletingUser(null)
+    } else {
+      alert(`Error deleting partner: ${result.error}`)
+    }
+
+    setIsDeleting(false)
+  }
+
   return (
     <div className="p-4 md:p-8 space-y-6 bg-bg-main min-h-full text-text-main">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -212,6 +231,15 @@ export default function AdminUsersPage() {
                         className="border-[#FF4C4C]/30 text-[#FF4C4C] hover:bg-[#FF4C4C]/10 hover:text-[#FF4C4C]"
                       >
                         Reset PWD
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDeletingUser(user)}
+                        disabled={user.is_admin === true}
+                        className="border-[#FF4C4C] text-white bg-[#FF4C4C] hover:bg-[#e04444] hover:border-[#e04444] hover:text-white"
+                      >
+                        Delete
                       </Button>
                     </div>
                   </TableCell>
@@ -376,6 +404,25 @@ export default function AdminUsersPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deletingUser} onOpenChange={(open) => !open && !isDeleting && setDeletingUser(null)}>
+        <DialogContent className="sm:max-w-[400px] bg-bg-card border-border-subtle text-text-main">
+          <DialogHeader>
+            <DialogTitle className="text-text-main">Delete Partner</DialogTitle>
+            <DialogDescription className="text-[#8F9BB3]">
+              Are you sure you want to permanently delete <span className="text-brand-accent font-semibold">{deletingUser?.email}</span>? This action cannot be undone and will remove all their access completely.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button type="button" variant="outline" onClick={() => setDeletingUser(null)} disabled={isDeleting} className="border-border-subtle text-text-main hover:bg-bg-hover">
+              Cancel
+            </Button>
+            <Button onClick={handleDeletePartner} disabled={isDeleting} className="bg-[#FF4C4C] hover:bg-[#e04444] text-white font-bold">
+              {isDeleting ? "Deleting..." : "Delete Partner"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

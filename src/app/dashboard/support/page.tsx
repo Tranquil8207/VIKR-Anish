@@ -13,7 +13,7 @@ import {
    SelectValue,
 } from "@/components/ui/select"
 import { MessageSquarePlus } from "lucide-react"
-import { getMyTickets, createSupportTicket } from "@/app/dashboard/actions/support"
+import { getMyTickets, createSupportTicket, updateTicketStatus } from "@/app/dashboard/actions/support"
 
 type Ticket = {
    id: string
@@ -22,6 +22,10 @@ type Ticket = {
    description: string
    status: string
    created_at: string
+   profiles?: {
+      full_name: string | null
+      company_name: string | null
+   }
 }
 
 export default function SupportTicketingPage() {
@@ -29,12 +33,14 @@ export default function SupportTicketingPage() {
    const [isLoading, setIsLoading] = useState(true)
    const [isSubmitting, setIsSubmitting] = useState(false)
    const [error, setError] = useState<string | null>(null)
+   const [isAdmin, setIsAdmin] = useState(false)
 
    const loadTickets = async () => {
       setIsLoading(true)
-      const { success, data, error } = await getMyTickets()
+      const { success, data, error, isAdmin: adminStatus } = await getMyTickets()
       if (success && data) {
          setTickets(data as Ticket[])
+         setIsAdmin(adminStatus || false)
          setError(null)
       } else {
          setError(error || "Failed to load tickets.")
@@ -77,6 +83,15 @@ export default function SupportTicketingPage() {
       }
    }
 
+   const handleStatusChange = async (ticket_id: string, newStatus: string) => {
+      const res = await updateTicketStatus(ticket_id, newStatus as any)
+      if (res.success) {
+         loadTickets()
+      } else {
+         alert(res.error)
+      }
+   }
+
    return (
       <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-12 w-full bg-bg-main min-h-full">
          <div>
@@ -87,53 +102,55 @@ export default function SupportTicketingPage() {
          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
 
             {/* Create Ticket Form */}
-            <div className="md:col-span-1 space-y-6 shrink-0">
-               <div className="rounded-xl border border-border-subtle bg-bg-card overflow-hidden">
-                  <div className="p-5 border-b border-border-subtle">
-                     <h3 className="text-base font-bold text-text-main flex items-center gap-2">
-                        <MessageSquarePlus className="w-5 h-5 text-brand-accent" />
-                        New Ticket
-                     </h3>
-                     <p className="text-sm text-text-muted mt-1">We typically respond within 24 hours.</p>
-                  </div>
-                  <div className="p-5">
-                     <form onSubmit={handleSubmit} className="space-y-5">
-                        <div className="space-y-2">
-                           <label className="text-sm font-medium text-text-main" htmlFor="category">Category</label>
-                           <Select required name="category" defaultValue="Technical">
-                              <SelectTrigger id="category" className="w-full bg-bg-main border-border-subtle text-text-main">
-                                 <SelectValue placeholder="Select a category" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                 <SelectItem value="Pricing">Pricing &amp; Sales</SelectItem>
-                                 <SelectItem value="Technical">Technical Application</SelectItem>
-                                 <SelectItem value="Docs">Documentation</SelectItem>
-                              </SelectContent>
-                           </Select>
-                        </div>
+            {!isAdmin && (
+               <div className="md:col-span-1 space-y-6 shrink-0">
+                  <div className="rounded-xl border border-border-subtle bg-bg-card overflow-hidden">
+                     <div className="p-5 border-b border-border-subtle">
+                        <h3 className="text-base font-bold text-text-main flex items-center gap-2">
+                           <MessageSquarePlus className="w-5 h-5 text-brand-accent" />
+                           New Ticket
+                        </h3>
+                        <p className="text-sm text-text-muted mt-1">We typically respond within 24 hours.</p>
+                     </div>
+                     <div className="p-5">
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                           <div className="space-y-2">
+                              <label className="text-sm font-medium text-text-main" htmlFor="category">Category</label>
+                              <Select required name="category" defaultValue="Technical">
+                                 <SelectTrigger id="category" className="w-full bg-bg-main border-border-subtle text-text-main">
+                                    <SelectValue placeholder="Select a category" />
+                                 </SelectTrigger>
+                                 <SelectContent>
+                                    <SelectItem value="Pricing">Pricing &amp; Sales</SelectItem>
+                                    <SelectItem value="Technical">Technical Application</SelectItem>
+                                    <SelectItem value="Docs">Documentation</SelectItem>
+                                 </SelectContent>
+                              </Select>
+                           </div>
 
-                        <div className="space-y-2">
-                           <label className="text-sm font-medium text-text-main" htmlFor="description">Description</label>
-                           <Textarea
-                              id="description"
-                              name="description"
-                              required
-                              placeholder="Please describe your issue or request in detail..."
-                              className="min-h-[120px] resize-y w-full bg-bg-main border-border-subtle text-text-main placeholder:text-text-meta"
-                           />
-                        </div>
+                           <div className="space-y-2">
+                              <label className="text-sm font-medium text-text-main" htmlFor="description">Description</label>
+                              <Textarea
+                                 id="description"
+                                 name="description"
+                                 required
+                                 placeholder="Please describe your issue or request in detail..."
+                                 className="min-h-[120px] resize-y w-full bg-bg-main border-border-subtle text-text-main placeholder:text-text-meta"
+                              />
+                           </div>
 
-                        <Button type="submit" className="w-full bg-brand-accent hover:bg-[#4e9422] text-black font-bold" disabled={isSubmitting}>
-                           {isSubmitting ? "Submitting..." : "Submit Ticket"}
-                        </Button>
-                     </form>
+                           <Button type="submit" className="w-full bg-brand-accent hover:bg-[#4e9422] text-black font-bold" disabled={isSubmitting}>
+                              {isSubmitting ? "Submitting..." : "Submit Ticket"}
+                           </Button>
+                        </form>
+                     </div>
                   </div>
                </div>
-            </div>
+            )}
 
             {/* My Tickets View */}
-            <div className="md:col-span-2 space-y-6 min-w-0">
-               <h3 className="text-xl font-semibold text-text-main">My Tickets</h3>
+            <div className={`space-y-6 min-w-0 ${isAdmin ? 'md:col-span-3' : 'md:col-span-2'}`}>
+               <h3 className="text-xl font-semibold text-text-main">{isAdmin ? "All Partner Tickets" : "My Tickets"}</h3>
                <div className="grid gap-4">
                   {isLoading ? (
                      <div className="text-center py-12 text-text-meta border rounded-lg border-dashed border-border-subtle">
@@ -145,7 +162,7 @@ export default function SupportTicketingPage() {
                      </div>
                   ) : tickets.length === 0 ? (
                      <div className="text-center py-12 text-text-meta border rounded-lg border-dashed border-border-subtle">
-                        You haven&apos;t submitted any tickets yet.
+                        There are no tickets to view.
                      </div>
                   ) : (
                      tickets.map(ticket => (
@@ -154,11 +171,16 @@ export default function SupportTicketingPage() {
                               <div className="space-y-1.5 w-full sm:w-2/3">
                                  <div className="flex items-center gap-3 mb-1">
                                     <span className="text-xs font-mono text-text-meta bg-bg-main px-2 py-0.5 rounded border border-border-subtle">
-                                       {ticket.ticket_id || ticket.id.substring(0, 8)}
+                                       {(ticket.ticket_id || ticket.id)?.substring(0, 8)}
                                     </span>
                                     <span className="text-sm font-semibold text-text-main">
                                        {ticket.category}
                                     </span>
+                                    {isAdmin && ticket.profiles && (
+                                       <span className="text-xs font-medium text-text-brand bg-bg-main px-2 py-0.5 rounded border border-border-subtle">
+                                          User: {ticket.profiles.full_name || ticket.profiles.company_name || 'Unknown'}
+                                       </span>
+                                    )}
                                  </div>
                                  <p className="text-sm text-text-muted line-clamp-2 sm:line-clamp-3 overflow-wrap break-words word-break">
                                     {ticket.description}
@@ -166,9 +188,26 @@ export default function SupportTicketingPage() {
                               </div>
 
                               <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 sm:gap-1.5 pl-0 sm:pl-4 sm:border-l border-border-subtle mt-2 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 shrink-0">
-                                 <Badge variant={getBadgeVariant(ticket.status)}>
-                                    {ticket.status.replace("_", " ")}
-                                 </Badge>
+                                 {isAdmin ? (
+                                    <Select
+                                       defaultValue={ticket.status}
+                                       onValueChange={(val) => handleStatusChange(ticket.ticket_id || ticket.id, val)}
+                                    >
+                                       <SelectTrigger className="w-[140px] h-8 text-xs bg-bg-main border-border-subtle text-text-main">
+                                          <SelectValue />
+                                       </SelectTrigger>
+                                       <SelectContent>
+                                          <SelectItem value="OPEN">Open</SelectItem>
+                                          <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                                          <SelectItem value="RESOLVED">Resolved</SelectItem>
+                                          <SelectItem value="CLOSED">Closed</SelectItem>
+                                       </SelectContent>
+                                    </Select>
+                                 ) : (
+                                    <Badge variant={getBadgeVariant(ticket.status)}>
+                                       {ticket.status.replace("_", " ")}
+                                    </Badge>
+                                 )}
                                  <span className="text-xs text-text-meta whitespace-nowrap">
                                     {new Date(ticket.created_at).toLocaleDateString()}
                                  </span>

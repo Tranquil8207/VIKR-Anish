@@ -280,39 +280,42 @@ export type Database = {
           },
         ]
       }
-      training_modules: {
+      training_hub_videos: {
         Row: {
           category: string
           created_at: string
-          duration: number | null
+          duration_seconds: number | null
           id: string
           market_segment: string | null
           pdf_resource_url: string | null
           title: string
           valid_regions: Database["public"]["Enums"]["territory"][]
           video_url: string
+          youtube_video_id: string
         }
         Insert: {
           category: string
           created_at?: string
-          duration?: number | null
+          duration_seconds?: number | null
           id?: string
           market_segment?: string | null
           pdf_resource_url?: string | null
           title: string
           valid_regions?: Database["public"]["Enums"]["territory"][]
           video_url: string
+          youtube_video_id: string
         }
         Update: {
           category?: string
           created_at?: string
-          duration?: number | null
+          duration_seconds?: number | null
           id?: string
           market_segment?: string | null
           pdf_resource_url?: string | null
           title?: string
           valid_regions?: Database["public"]["Enums"]["territory"][]
           video_url?: string
+          youtube_video_id?: string
         }
         Relationships: []
       }

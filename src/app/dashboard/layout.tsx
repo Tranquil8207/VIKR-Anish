@@ -3,7 +3,15 @@ import { redirect } from "next/navigation"
 import { Users, FileText, Package, LayoutDashboard, Video, LifeBuoy, Database, Key } from "lucide-react"
 import { NavItem } from "@/components/nav-item"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Poppins } from "next/font/google"
+import { DashboardFontActivator } from "@/components/dashboard-font-activator"
 
+const poppins = Poppins({
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"]
+})
 export default async function DashboardLayout({
   children,
 }: {
@@ -27,7 +35,8 @@ export default async function DashboardLayout({
     .single()
 
   return (
-    <div className="flex h-screen overflow-hidden bg-bg-main text-text-main">
+    <div className={`dashboard-scope flex h-screen overflow-hidden bg-bg-main text-text-main ${poppins.variable} ${poppins.className}`}>
+      <DashboardFontActivator />
       {/* Sidebar */}
       <aside className="w-[252px] border-r bg-bg-card border-border-subtle hidden md:flex flex-col">
 
@@ -36,7 +45,7 @@ export default async function DashboardLayout({
           <img
             src="/vikr-logo-new.svg"
             alt="VIKR Bioscience"
-            className="h-[38px] w-auto max-w-[180px] object-contain object-left dark:invert-0 light-logo-invert"
+            className="h-[38px] w-auto max-w-[180px] object-contain object-left"
           />
           <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.1em] text-text-muted">
             Partner Hub &middot; Vikr Bioscience Pvt. Ltd.

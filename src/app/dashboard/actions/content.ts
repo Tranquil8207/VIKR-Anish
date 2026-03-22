@@ -10,7 +10,7 @@ export async function getTrainingModules() {
   // Thanks to RLS, this will automatically only return modules 
   // valid for the user's territory_code
   const { data, error } = await supabase
-    .from('training_modules')
+    .from('training_hub_videos')
     .select('*')
     .order('created_at', { ascending: false })
 

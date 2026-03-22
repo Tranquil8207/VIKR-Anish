@@ -23,13 +23,18 @@ export async function getSecureDocumentUrl(documentId: string, expiresInSeconds:
     const { data, error } = await supabase
       .storage
       .from('secure_documents')
-      .createSignedUrl(document.file_url, expiresInSeconds)
+      .createSignedUrl(document.file_url, expiresInSeconds, {
+        download: false
+      })
 
     if (error) throw error
 
+    const isImage = /\.(png|jpe?g|gif|webp|svg)$/i.test(document.file_url || '')
+
     return {
       success: true,
-      url: data.signedUrl
+      url: data.signedUrl,
+      isImage
     }
 
   } catch (error) {
