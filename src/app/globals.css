@@ -55,8 +55,8 @@
 
   --color-brand-accent: var(--brand-accent);
 
-  --font-sans: var(--font-dm-sans);
-  --font-syne: var(--font-syne);
+  --font-sans: var(--font-poppins);
+  --font-syne: var(--font-poppins);
 }
 
 body {
@@ -72,28 +72,4 @@ body {
 
 .dark .light-logo-invert {
   filter: none;
-}
-
-/* Dashboard Font Override */
-body.dashboard-poppins-override {
-  --color-text-main: var(--text-main);
-  /* Tailwind v4 CSS variable remaps */
-  --font-sans: var(--font-poppins);
-  --font-syne: var(--font-poppins);
-  font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji" !important;
-}
-
-body.dashboard-poppins-override * {
-  font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji" !important;
-}
-
-body.dashboard-poppins-override code,
-body.dashboard-poppins-override pre,
-body.dashboard-poppins-override kbd,
-body.dashboard-poppins-override samp,
-body.dashboard-poppins-override code *,
-body.dashboard-poppins-override pre *,
-body.dashboard-poppins-override kbd *,
-body.dashboard-poppins-override samp * {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
 }
