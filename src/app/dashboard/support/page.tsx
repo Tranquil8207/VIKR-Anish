@@ -16,8 +16,8 @@ import { MessageSquarePlus } from "lucide-react"
 import { getMyTickets, createSupportTicket, updateTicketStatus } from "@/app/dashboard/actions/support"
 
 type Ticket = {
-   id: string
    ticket_id: string
+   id?: string // In case other parts of the code use 'id'
    category: string
    description: string
    status: string
@@ -166,7 +166,7 @@ export default function SupportTicketingPage() {
                      </div>
                   ) : (
                      tickets.map(ticket => (
-                        <div key={ticket.id} className="rounded-xl border border-border-subtle bg-bg-card hover:bg-bg-hover transition-all overflow-hidden">
+                        <div key={ticket.ticket_id || ticket.id} className="rounded-xl border border-border-subtle bg-bg-card hover:bg-bg-hover transition-all overflow-hidden">
                            <div className="p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
                               <div className="space-y-1.5 w-full sm:w-2/3">
                                  <div className="flex items-center gap-3 mb-1">
@@ -191,7 +191,7 @@ export default function SupportTicketingPage() {
                                  {isAdmin ? (
                                     <Select
                                        defaultValue={ticket.status}
-                                       onValueChange={(val) => handleStatusChange(ticket.ticket_id || ticket.id, val)}
+                                       onValueChange={(val) => handleStatusChange(ticket.ticket_id, val)}
                                     >
                                        <SelectTrigger className="w-[140px] h-8 text-xs bg-bg-main border-border-subtle text-text-main">
                                           <SelectValue />

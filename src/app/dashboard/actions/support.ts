@@ -3,6 +3,23 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { Database } from '@/types/supabase'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+
+function createAdminClient() {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY is missing from environment variables.')
+  }
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  )
+}
 
 type TicketCategory = Database['public']['Tables']['support_tickets']['Row']['category']
 
@@ -23,18 +40,24 @@ export async function createSupportTicket(formData: FormData) {
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Check if profile exists to avoid foreign key violation
+  const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).single()
+  if (!profile) {
+    return { success: false, error: 'User profile not found. Please contact support.' }
+  }
+
   const { error } = await supabase
     .from('support_tickets')
     .insert({
       partner_id: user.id,
       category,
       description,
-      status: 'OPEN' // Default value from schema, explicit here for clarity
+      status: 'OPEN'
     })
 
   if (error) {
     console.error('Error creating support ticket:', error)
-    return { success: false, error: 'Failed to submit ticket. Please try again later.' }
+    return { success: false, error: `Error: ${error.message} (${error.code})` }
   }
 
   revalidatePath('/dashboard/support')
@@ -47,14 +70,34 @@ export async function getMyTickets() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, data: null, error: 'Not authenticated', isAdmin: false }
 
-  const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
+  // Use admin client to check admin status to bypass recursive RLS
+  const supabaseAdmin = createAdminClient()
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
   const isAdmin = profile?.is_admin || false
 
-  // RLS ensures they only see their own tickets
-  const { data, error } = await supabase
-    .from('support_tickets')
-    .select('*')
-    .order('created_at', { ascending: false })
+  let data, error
+
+  if (isAdmin) {
+    // Admins see all tickets
+    const res = await supabaseAdmin
+      .from('support_tickets')
+      .select('*')
+      .order('created_at', { ascending: false })
+    data = res.data
+    error = res.error
+  } else {
+    // Regular users rely on RLS (Users manage own tickets)
+    const res = await supabase
+      .from('support_tickets')
+      .select('*')
+      .order('created_at', { ascending: false })
+    data = res.data
+    error = res.error
+  }
 
   if (error) {
     console.error('Error fetching support tickets:', error)
